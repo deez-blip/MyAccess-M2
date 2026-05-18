@@ -66,7 +66,7 @@ export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProp
                     <span className="text-xs text-muted-foreground">{center.city}</span>
                   </div>
                   <Link
-                    href={"center/" + center.id}
+                    href={`/center/${center.id}`}
                     className='w-full text-center'
                   >Voir les détails</Link>
                 </Popup>

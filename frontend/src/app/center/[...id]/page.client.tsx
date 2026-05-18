@@ -1,14 +1,14 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Globe, ArrowLeft, Calendar, Star, ThumbsUp, Navigation } from 'lucide-react';
-import { Center, User, Review } from '@/types';
+import { Center } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RatingForm } from './_components/RatingForm';
-import { getCenter, getCurrentUser } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { centersApi } from '@/lib/api';
 
 interface CenterDetailsClientProps {
   idCenter : string;
@@ -18,22 +18,61 @@ interface CenterDetailsClientProps {
 export default function CenterDetailsClient({ idCenter }: CenterDetailsClientProps) {
   const [showRatingForm, setShowRatingForm] = useState(false);
 
-  const {user} = useAuth()
+  const { user, session } = useAuth()
   
   const [center, setCenter] = useState(undefined as Center | undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { 
-    const center : Center | undefined = getCenter(idCenter)
-    setCenter(center)
-    }, [])
+  const loadCenter = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-    if (!center) {
-        return(
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-muted-foreground">Centre non trouvé.</p>
-            </div>
-        )
+    try {
+      const data = await centersApi.get(idCenter);
+      setCenter(data);
+    } catch (err) {
+      setCenter(undefined);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de charger le centre"
+      );
+    } finally {
+      setIsLoading(false);
     }
+  }, [idCenter]);
+
+  useEffect(() => {
+    loadCenter();
+  }, [loadCenter]);
+
+  if (isLoading) {
+    return(
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Chargement du centre...</p>
+      </div>
+    )
+  }
+
+  if (!center) {
+    return(
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className={error ? "text-destructive" : "text-muted-foreground"}>
+            {error || "Centre non trouvé."}
+          </p>
+          <Button
+            variant="link"
+            onClick={() => window.location.href = (user ? '/dashboard' : '/')}
+            className="mt-2"
+          >
+            Retour à la recherche
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const getScoreColor = (score: number) => {
     if (score >= 4.5) return 'text-green-600';
@@ -216,7 +255,11 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                   <RatingForm
                     center={center}
                     user={user!}
-                    onSubmit={() => setShowRatingForm(false)}
+                    token={session?.accessToken || ""}
+                    onSubmit={() => {
+                      setShowRatingForm(false);
+                      loadCenter();
+                    }}
                     onCancel={() => setShowRatingForm(false)}
                   />
                 ) : (
