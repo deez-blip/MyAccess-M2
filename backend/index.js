@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import centersRoutes from "./routes/centers.js";
+import ansRoutes from "./routes/ans.js";
 
 dotenv.config();
 
@@ -62,6 +63,7 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/centers", centersRoutes);
+app.use("/api/ans", ansRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Backend is running" });
@@ -73,6 +75,7 @@ app.get("/api", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       centers: "/api/centers",
+      ans: "/api/ans",
       health: "/health",
     },
   });
@@ -154,5 +157,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📡 API disponible sur http://localhost:${PORT}`);
-  console.log(`✅ Routes chargées: /api/auth, /api/centers`);
+  console.log(`✅ Routes chargées: /api/auth, /api/centers, /api/ans`);
 });
