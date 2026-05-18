@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import { Center, User, HandicapType, Review } from '@/types';
+import { Center, User, HandicapType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { addReview, updateCenterWithReview, addNotification } from '@/lib/mockData';
+import { centersApi } from '@/lib/api';
 
 interface RatingFormProps {
   center: Center;
   user: User;
+  token: string;
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -22,55 +23,63 @@ const handicapTypes: { value: HandicapType; label: string }[] = [
   { value: 'cognitif', label: 'Handicaps cognitifs' },
 ];
 
-export function RatingForm({ center, user, onSubmit, onCancel }: RatingFormProps) {
+export function RatingForm({ center, user, token, onSubmit, onCancel }: RatingFormProps) {
   const [scores, setScores] = useState({
     physique: 0,
     numerique: 0,
     accueil: 0,
   });
   const [comment, setComment] = useState('');
-  const [selectedHandicaps, setSelectedHandicaps] = useState<string[]>(user.handicapType?.split(';') || []);
+  const [selectedHandicaps, setSelectedHandicaps] = useState<string[]>(
+    user.handicapType?.split(/[;,]/).filter(Boolean) || []
+  );
   const [hoveredScores, setHoveredScores] = useState({
     physique: 0,
     numerique: 0,
     accueil: 0,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
     if (scores.physique === 0 || scores.numerique === 0 || scores.accueil === 0) {
-      alert('Veuillez noter tous les critères');
+      setError('Veuillez noter tous les critères');
       return;
     }
 
-    const review: Review = {
-      id: Date.now().toString(),
-      userId: user.id,
-      userName: user.firstName + " " + user.lastName,
-      centerId: center.id,
-      date: new Date().toISOString(),
-      scores,
-      comment,
-      handicapTypes: selectedHandicaps,
-      helpfulCount: 0,
-    };
+    if (!token) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
 
-    addReview(review);
-    updateCenterWithReview(center.id, review);
+    const rating = Math.round(
+      (scores.physique + scores.numerique + scores.accueil) / 3
+    );
 
-    // Add notification
-    addNotification({
-      id: Date.now().toString(),
-      userId: user.id,
-      title: 'Avis publié',
-      message: `Votre avis sur ${center.name} a été publié avec succès.`,
-      date: new Date().toISOString(),
-      read: false,
-      type: 'review',
-    });
+    try {
+      setIsSubmitting(true);
+      await centersApi.addReview(
+        center.id,
+        {
+          rating,
+          comment: comment.trim() || undefined,
+        },
+        token
+      );
 
-    onSubmit();
+      onSubmit();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de publier l'avis"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleHandicap = (type: HandicapType) => {
@@ -110,6 +119,16 @@ export function RatingForm({ center, user, onSubmit, onCancel }: RatingFormProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 border rounded-lg p-4 bg-muted/30">
+      {error && (
+        <div
+          className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
+          role="alert"
+          aria-live="polite"
+        >
+          {error}
+        </div>
+      )}
+
       <div>
         <h3 className="mb-4">Évaluez ce centre</h3>
 
@@ -194,8 +213,8 @@ export function RatingForm({ center, user, onSubmit, onCancel }: RatingFormProps
         <Button type="button" variant="outline" onClick={onCancel}>
           Annuler
         </Button>
-        <Button type="submit">
-          Publier mon avis
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Publication..." : "Publier mon avis"}
         </Button>
       </div>
     </form>

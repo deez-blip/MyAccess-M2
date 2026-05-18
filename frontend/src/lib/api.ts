@@ -1,3 +1,5 @@
+import { Center, Review } from "@/types";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface ApiOptions {
@@ -118,11 +120,11 @@ export const centersApi = {
     if (params?.offset) searchParams.set("offset", params.offset.toString());
     
     const query = searchParams.toString();
-    return api<unknown[]>(`/api/centers${query ? `?${query}` : ""}`);
+    return api<Center[]>(`/api/centers${query ? `?${query}` : ""}`);
   },
 
-  get: (id: string) => api<unknown>(`/api/centers/${id}`),
+  get: (id: string) => api<Center>(`/api/centers/${id}`),
 
   addReview: (id: string, data: { rating: number; comment?: string }, token: string) =>
-    api<unknown>(`/api/centers/${id}/reviews`, { method: "POST", body: data, token }),
+    api<Review>(`/api/centers/${id}/reviews`, { method: "POST", body: data, token }),
 };

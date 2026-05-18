@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, List, Map } from 'lucide-react';
-import { Center, HandicapType, User } from '@/types';
-import { getCenters } from '@/lib/mockData';
+import { Center, User } from '@/types';
+import { centersApi } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FilterPanel } from './_components/FilterPanel';
 import { CenterCard } from './_components/CenterCard';
 import dynamic from 'next/dynamic';
@@ -24,13 +24,50 @@ interface DashboardProps {
 export default function DashboardClient({ user, onNavigate }: DashboardProps) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState( searchParams.get("q") ?? '');
-  const [selectedHandicaps, setSelectedHandicaps] = useState<string[]>(user?.handicapType?.split(";") || []);
+  const [selectedHandicaps, setSelectedHandicaps] = useState<string[]>(
+    user?.handicapType?.split(/[;,]/).filter(Boolean) || []
+  );
   const [minScore, setMinScore] = useState(0);
   const [centerType, setCenterType] = useState<'all' | 'vaccination' | 'depistage' | 'both'>('all');
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const centers = getCenters();
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCenters = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await centersApi.list({ limit: 100 });
+        if (isMounted) {
+          setCenters(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Impossible de charger les centres"
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadCenters();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredCenters = useMemo(() => {
     return centers.filter(center => {
@@ -69,7 +106,7 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
 
   const handleViewDetails = (center: Center) => {
     if(typeof window === "undefined") return;
-    window.location.href = "center/" + center.id
+    window.location.href = "/center/" + center.id
   };
 
   return (
@@ -128,7 +165,22 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
               </Tabs>
             </div>
 
-            {viewMode === 'map' ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Chargement des centres...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-destructive">{error}</p>
+                <Button
+                  variant="link"
+                  onClick={() => window.location.reload()}
+                  className="mt-2"
+                >
+                  Réessayer
+                </Button>
+              </div>
+            ) : viewMode === 'map' ? (
               <div className="h-[600px]">
                 <MapView
                   centers={filteredCenters}
