@@ -6,7 +6,6 @@ import {
   Accessibility,
   Volume2,
   Eye,
-  Palette,
   MousePointer2,
   Focus,
   Type,
@@ -82,12 +81,6 @@ export function AccessibilityWidget() {
               label="Contraste renforcé"
               checked={settings.highContrast}
               onChange={() => toggleSetting("highContrast")}
-            />
-            <ToggleItem
-              icon={<Palette className="h-4 w-4" aria-hidden="true" />}
-              label="Mode daltonien (couleurs adaptées)"
-              checked={settings.colorBlindAssist}
-              onChange={() => toggleSetting("colorBlindAssist")}
             />
             <ToggleItem
               icon={<MousePointer2 className="h-4 w-4" aria-hidden="true" />}

@@ -245,16 +245,7 @@ html[data-a11y-high-contrast="true"] {
   --ring: #ffbf47;
 }
 
-html[data-a11y-color-blind-assist="true"] {
-  --primary: #005ea8;
-  --primary-foreground: #ffffff;
-  --destructive: #7a1fa2;
-  --chart-1: #0072b2;
-  --chart-2: #009e73;
-  --chart-3: #d55e00;
-  --chart-4: #cc79a7;
-  --chart-5: #56b4e9;
-}
+/* color-blind assist mode removed */
 
 html[data-a11y-enhanced-focus="true"]
   :where(a, button, input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {

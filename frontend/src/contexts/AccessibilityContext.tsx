@@ -14,7 +14,6 @@ import {
 export interface AccessibilitySettings {
   highContrast: boolean;
   largeCursor: boolean;
-  colorBlindAssist: boolean;
   largeText: boolean;
   keyboardTts: boolean;
   enhancedFocus: boolean;
@@ -33,7 +32,6 @@ const STORAGE_KEY = "a11y_settings";
 const DEFAULT_SETTINGS: AccessibilitySettings = {
   highContrast: false,
   largeCursor: false,
-  colorBlindAssist: false,
   largeText: false,
   keyboardTts: false,
   enhancedFocus: true,
@@ -103,7 +101,6 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.dataset.a11yHighContrast = settings.highContrast ? "true" : "false";
     root.dataset.a11yLargeCursor = settings.largeCursor ? "true" : "false";
-    root.dataset.a11yColorBlindAssist = settings.colorBlindAssist ? "true" : "false";
     root.dataset.a11yLargeText = settings.largeText ? "true" : "false";
     root.dataset.a11yEnhancedFocus = settings.enhancedFocus ? "true" : "false";
     root.dataset.a11yReducedMotion = settings.reducedMotion ? "true" : "false";
