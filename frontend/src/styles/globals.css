@@ -21,7 +21,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -35,19 +35,22 @@ body {
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-sans: var(--font-jakarta), Arial, Helvetica, sans-serif;
   --font-size: 16px;
   --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --foreground: #14284b;
   --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #2769C4;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
+  --card-foreground: #14284b;
+  --popover: #ffffff;
+  --popover-foreground: #14284b;
+  --primary: #0052cc;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f6ff;
+  --secondary-foreground: #14284b;
+  --muted: #f4f6f8;
+  --muted-foreground: #6b7280;
+  --accent: #e5edff;
+  --accent-foreground: #0052cc;
   --accent: #e9ebef;
   --accent-foreground: #030213;
   --destructive: #d4183d;
@@ -167,7 +170,7 @@ body {
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
 @layer base {
-  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {
       font-size: var(--text-2xl);
       font-weight: var(--font-weight-medium);
@@ -248,7 +251,15 @@ html[data-a11y-high-contrast="true"] {
 /* color-blind assist mode removed */
 
 html[data-a11y-enhanced-focus="true"]
-  :where(a, button, input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  :where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
   outline: 3px solid #ffbf47 !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.85) !important;
@@ -257,7 +268,10 @@ html[data-a11y-enhanced-focus="true"]
 
 html[data-a11y-large-cursor="true"],
 html[data-a11y-large-cursor="true"] * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' stroke='%23ffffff' stroke-width='1.5' d='M3 2L18 14H11L15 22L11.8 23.6L7.8 15.5L3 19z'/%3E%3C/svg%3E") 2 2, auto !important;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath fill='%23000000' stroke='%23ffffff' stroke-width='1.5' d='M3 2L18 14H11L15 22L11.8 23.6L7.8 15.5L3 19z'/%3E%3C/svg%3E")
+      2 2,
+    auto !important;
 }
 
 html[data-a11y-large-cursor="true"] a,
@@ -267,7 +281,10 @@ html[data-a11y-large-cursor="true"] input,
 html[data-a11y-large-cursor="true"] label,
 html[data-a11y-large-cursor="true"] select,
 html[data-a11y-large-cursor="true"] textarea {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath fill='%230055aa' stroke='%23ffffff' stroke-width='1.5' d='M3 2L18 14H11L15 22L11.8 23.6L7.8 15.5L3 19z'/%3E%3C/svg%3E") 2 2, pointer !important;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Cpath fill='%230055aa' stroke='%23ffffff' stroke-width='1.5' d='M3 2L18 14H11L15 22L11.8 23.6L7.8 15.5L3 19z'/%3E%3C/svg%3E")
+      2 2,
+    pointer !important;
 }
 
 html[data-a11y-reduced-motion="true"] *,

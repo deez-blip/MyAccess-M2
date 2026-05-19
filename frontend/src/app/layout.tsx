@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "../styles/globals.css";
 import { Header } from "../components/blocks/Header";
 import { Footer } from "../components/blocks/Footer";
@@ -8,19 +8,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { AccessibilityWidget } from "@/components/blocks/AccessibilityWidget";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-jakarta",
 });
 
 export const metadata: Metadata = {
   title: "MyAccess - Centres de santé accessibles",
-  description: "Trouvez des centres de vaccination et dépistage accessibles près de chez vous",
+  description:
+    "Trouvez des centres de vaccination et dépistage accessibles près de chez vous",
 };
 
 export default function RootLayout({
@@ -44,7 +40,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${jakarta.variable} font-sans`}>
         <AccessibilityProvider>
           <AuthProvider>
             <Header />

@@ -1,227 +1,199 @@
-"use client"
+"use client";
 
-import { Search, MapPin, Star, Users, Shield, Heart } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card, CardContent } from '../components/ui/card';
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { Search, MapPin, Star, X, Building, Icon } from "lucide-react";
+import { Input } from "../components/ui/input";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import Image from "next/image";
 
 export default function LandingPageClient() {
   const [searchValue, setSearchValue] = useState<string>("");
+  const [locationValue, setLocationValue] = useState<string>("");
   const { user } = useAuth();
   const router = useRouter();
 
-  // Gestion du formulaire pour permettre la validation avec la touche "Entrée"
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const destination = user ? "/dashboard" : "/login";
-    const query = searchValue.trim() ? `?q=${encodeURIComponent(searchValue.trim())}` : "";
+    const query = searchValue.trim()
+      ? `?q=${encodeURIComponent(searchValue.trim())}`
+      : "";
     router.push(`${destination}${query}`);
   };
 
+  const tags = [
+    "Handicap Moteur",
+    "Surdité",
+    "Autisme",
+    "Hôpital",
+    "Pédiatrie",
+  ];
+
   return (
-    // Utilisation de la balise <main> avec un ID pour les liens d'évitement
-    <main id="main-content" className="min-h-screen">
-      
+    <main
+      id="main-content"
+      className="min-h-screen bg-[#f4f8ff] font-sans overflow-x-hidden"
+    >
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary/5 to-white py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Regroupement sémantique du titre principal */}
-            <h1 className="text-2xl font-bold mb-6">
-              Trouvez un centre de santé <br />
-              <span className="text-primary text-xl font-normal block mt-2">100% accessible</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Recherchez, comparez et prenez rendez-vous dans des centres de dépistage 
-              et vaccination adaptés à vos besoins d'accessibilité.
-            </p>
+      <section className="relative pt-32 pb-48 lg:pt-48 lg:pb-48">
+        {/* Background decorative circles */}
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[800px] h-[800px] border border-blue-200/50 rounded-full" />
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] border border-blue-200/60 rounded-full" />
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] border border-blue-200/70 rounded-full" />
 
-            {/* Utilisation d'un vrai formulaire pour l'accessibilité au clavier */}
-            <form onSubmit={handleSearch} className="flex gap-3 max-w-2xl mx-auto mb-8" role="search">
-              <div className="flex-1 relative">
-                {/* Label masqué visuellement mais lu par les lecteurs d'écran */}
-                <label htmlFor="search-location" className="sr-only">
-                  Entrez votre ville ou code postal pour chercher un centre
-                </label>
-                <MapPin aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  id="search-location"
-                  type="search"
-                  placeholder="Entrez votre ville ou code postal..."
-                  className="pl-10 h-12"
-                  value={searchValue}
-                  onChange={e => setSearchValue(e.target.value)}
-                />
+        <div className="container mx-auto px-6 relative z-10 ">
+          <div className="flex flex-col lg:flex-row items-center">
+            {/* Left Content */}
+            <div className="w-full lg:w-1/2 lg:pr-12 text-center lg:text-left z-20 p-10">
+              <h1 className="text-5xl lg:text-[4rem] leading-[1.1] font-extrabold text-[#14284b] mb-6 tracking-tight">
+                Trouvez facilement un centre médical{" "}
+                <span className="text-primary block mt-1">accessible</span>
+              </h1>
+              <p className="text-lg text-[#556987] mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                Sur MyAccess, nous simplifions la recherche des médecins,
+                spécialistes et hôpitaux les plus adaptés à vos besoins
+                d'accessibilité et à votre famille.
+              </p>
+
+              {/* Badges */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                <div className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-lg shadow-xl shadow-blue-900/10">
+                  <div className="bg-white p-2 rounded-md">
+                    <Building className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold leading-tight">
+                      Des infos d'accessibilité
+                    </p>
+                    <p className="text-xs text-white/80">
+                      pour chaque établissement
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-primary text-white px-5 py-3 rounded-lg shadow-xl shadow-blue-900/10">
+                  <div className="bg-white p-2 rounded-md">
+                    <Star
+                      className="w-5 h-5 text-primary"
+                      fill="currentColor"
+                    />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold leading-tight">
+                      Des avis de patients
+                    </p>
+                    <p className="text-xs text-white/80">
+                      Authentiques et vérifiés
+                    </p>
+                  </div>
+                </div>
               </div>
-              <button 
-                type="submit"
-                className="h-12 px-8 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black"
+            </div>
+
+            {/* Right Content - Image Placeholder */}
+            <div className="w-full lg:w-1/2 mt-16 lg:mt-0 relative">
+              {/* Doctor Placeholder Box */}
+              <div className="relative w-full max-w-[500px] mx-auto z-10 flex flex-col items-center justify-end h-[500px] bg-blue-100 rounded-b-[40px] rounded-t-[200px] overflow-hidden shadow-2xl">
+                {/* TO REPLACE: Place actual image here */}
+                <div className="w-full h-full bg-gradient-to-t from-blue-600 to-transparent flex items-center justify-center">
+                  <span className="opacity-100 mt-5">
+                    <Image
+                      src="/france2.png"
+                      alt="Illustration de la France"
+                      width={500}
+                      height={500}
+                    />
+                  </span>
+                </div>
+              </div>
+
+              {/* Floating Icons */}
+              <div
+                className="absolute top-20 left-4 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-blue-50 text-blue-500 animate-bounce"
+                style={{ animationDuration: "3s" }}
               >
-                <Search aria-hidden="true" className="mr-2 h-5 w-5" />
-                Rechercher
-              </button>
-            </form>
-
-            { !user && 
-            <div className="flex gap-4 justify-center">
-              <Link className="h-10 px-6 text-sm flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black" href="/signup">
-                S'inscrire gratuitement
-              </Link>
-              <Link className="h-10 px-6 text-sm flex items-center justify-center rounded-md border bg-background text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black" href="/login">
-                Se connecter
-              </Link>
-            </div>
-            }
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Pourquoi choisir MyAccess ?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Une plateforme pensée pour tous, avec des informations détaillées 
-              sur l'accessibilité de chaque centre.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <MapPin aria-hidden="true" className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Carte interactive</h3>
-                <p className="text-muted-foreground">
-                  Visualisez tous les centres sur une carte avec leur niveau d'accessibilité en un coup d'œil.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <Star aria-hidden="true" className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Notation détaillée</h3>
-                <p className="text-muted-foreground">
-                  Scores sur 3 critères : accessibilité physique, numérique et qualité de l'accueil.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                  <Users aria-hidden="true" className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Avis communauté</h3>
-                <p className="text-muted-foreground">
-                  Consultez et partagez des retours d'expérience ciblés sur l'accessibilité.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Accessibility Types Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Filtrez selon vos besoins</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Notre plateforme prend en compte tous les types de handicap pour vous 
-              proposer les centres les plus adaptés.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-5 gap-4 max-w-5xl mx-auto">
-            {[
-              { name: 'Handicaps moteurs', icon: '🦽' },
-              { name: 'Handicaps sensoriels', icon: '👁️' },
-              { name: 'Handicaps mentaux', icon: '🧠' },
-              { name: 'Handicaps psychiques', icon: '💭' },
-              { name: 'Handicaps cognitifs', icon: '🎯' },
-            ].map((type) => (
-              <Card key={type.name} className="text-center">
-                <CardContent className="pt-6">
-                  {/* aria-hidden empêche le lecteur d'écran d'essayer de lire l'émoji */}
-                  <div aria-hidden="true" className="text-4xl mb-2">{type.icon}</div>
-                  <h3 className="text-sm font-medium">{type.name}</h3>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Comment ça marche ?</h2>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div aria-hidden="true" className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                  1
-                </div>
-                <h3 className="font-medium mb-2">Recherchez</h3>
-                <p className="text-muted-foreground">
-                  Utilisez la carte interactive et les filtres pour trouver un centre adapté
-                </p>
+                <span className="text-xl">💊</span>
               </div>
-
-              <div className="text-center">
-                <div aria-hidden="true" className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                  2
-                </div>
-                <h3 className="font-medium mb-2">Comparez</h3>
-                <p className="text-muted-foreground">
-                  Consultez les scores d'accessibilité et les avis de la communauté
-                </p>
+              <div
+                className="absolute bottom-40 -left-6 w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl border border-blue-50 text-blue-500 animate-bounce"
+                style={{ animationDuration: "4s" }}
+              >
+                <span className="text-2xl">🩺</span>
               </div>
-
-              <div className="text-center">
-                <div aria-hidden="true" className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                  3
-                </div>
-                <h3 className="font-medium mb-2">Réservez</h3>
-                <p className="text-muted-foreground">
-                  Prenez rendez-vous directement et obtenez un itinéraire accessible
-                </p>
+              <div
+                className="absolute top-40 right-0 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-blue-50 text-blue-500 animate-bounce"
+                style={{ animationDuration: "2.5s" }}
+              >
+                <span className="text-xl">❤️</span>
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <Heart aria-hidden="true" className="h-12 w-12 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-4">Rejoignez notre communauté</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Ensemble, rendons les soins de santé accessibles à tous. 
-            Inscrivez-vous gratuitement et contribuez en partageant vos expériences.
-          </p>
-          <Link 
-            href="/signup"
-            className="inline-flex h-11 items-center justify-center rounded-md bg-secondary text-secondary-foreground px-8 text-sm font-medium hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white"
+        {/* Floating Search Bar */}
+        <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[95%] max-w-[1000px] bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] p-6 z-30 border border-slate-100">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col md:flex-row gap-4 mb-6"
           >
-            Créer mon compte gratuitement
-          </Link>
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Spécialité, pathologie, nom d'établissement..."
+                className="pl-12 h-14 bg-slate-50 border-transparent rounded-xl focus-visible:ring-primary focus-visible:bg-white text-base font-medium placeholder:font-normal"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+            </div>
+            <div className="md:w-1/3 relative">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Où ? (Ville, Code postal)"
+                className="pl-12 h-14 bg-slate-50 border-transparent rounded-xl focus-visible:ring-primary focus-visible:bg-white text-base font-medium placeholder:font-normal"
+                value={locationValue}
+                onChange={(e) => setLocationValue(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-14 w-full md:w-16 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/95 shadow-md shadow-primary/20 transition-all shrink-0"
+              aria-label="Rechercher"
+            >
+              <Search className="h-6 w-6" />
+            </button>
+          </form>
+
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <p className="text-sm font-bold text-[#14284b] whitespace-nowrap">
+              Suggestions :
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {tags.map((tag) => (
+                <button
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-[#556987] text-sm font-medium transition-colors border border-slate-100"
+                  onClick={() => setSearchValue(tag)}
+                  type="button"
+                >
+                  {tag}
+                  <X className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              ))}
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-lg bg-[#e5edff] text-primary hover:bg-primary/20 text-sm font-bold transition-colors"
+              >
+                Plus
+              </button>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Spacer for floating search bar overlap */}
+      <div className="h-32 w-full"></div>
     </main>
   );
 }
