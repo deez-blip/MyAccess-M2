@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, LogOut, Menu } from 'lucide-react';
+import { Bell, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -10,12 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Center, User as UserType } from '@/types';
+import { Center } from '@/types';
 import { useEffect, useState } from 'react';
-import { getCenter, getCurrentUser, getNotifications, setCurrentUser } from '@/lib/mockData';
+import { getCenter, getNotifications } from '@/lib/mockData';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 type Page = 
   | 'home' 
@@ -36,27 +37,18 @@ type Page =
   | 'contact'
   | 'sitemap';
 
-interface HeaderProps {
-
-}
+interface HeaderProps {}
 
 export function Header({ }: HeaderProps) {
-  const {user, logout} = useAuth()
+  const { user, logout } = useAuth();
+  const router = useRouter(); // Remplacement de window.location par le router de Next.js
+  
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedCenterId, setSelectedCenterId] = useState<string | null>(null);
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
-  // Load user on mount
-    /*useEffect(() => {
-      const savedUser = getCurrentUser();
-      if (savedUser) {
-        setUser(savedUser);
-        setCurrentPage('dashboard');
-      }
-    }, []);*/
-  
-    // Update unread notifications count
+  // Update unread notifications count
   useEffect(() => {
     if (user) {
       const notifications = getNotifications(user.id);
@@ -75,71 +67,56 @@ export function Header({ }: HeaderProps) {
     }
   }, [selectedCenterId, currentPage]);
 
-  const handleNavigate = (page: string, centerId?: string) => {
-    if (centerId) {
-      setSelectedCenterId(centerId);
-    }
-    setCurrentPage(page as Page);
-    window.scrollTo(0, 0);
-  };
-
-  /*const handleLogin = () => {
-    const savedUser = getCurrentUser();
-    if (savedUser) {
-      setUser(savedUser);
-      setCurrentPage('dashboard');
-    }
-  };*/
-
   const handleLogout = () => {
-    logout()
+    logout();
   };
 
   return (
     <header className="border-b bg-white sticky top-0 z-50">
-      <a href="#main-content" className="sr-only focus:not-sr-only px-6 h-10 bg-primary text-primary-foreground rounded-md focus:absolute focus:top-4 focus:left-4">
+      {/* Lien d'évitement rendu visible uniquement au focus (Tabulation) */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only px-6 h-10 bg-primary text-primary-foreground rounded-md focus:absolute focus:top-4 focus:left-4 z-[100] flex items-center justify-center"
+      >
         Aller au contenu principal
       </a>
+
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href={"/"} className="flex items-center gap-2" aria-label="Retour à l'acceuil">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground">
+          
+          {/* Logo - Nettoyé pour ne pas faire bégayer les lecteurs d'écran */}
+          <Link href={"/"} className="flex items-center gap-2" aria-label="Retour à l'accueil">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground" aria-hidden="true">
               <Image
                 src={"/logo.png"}
-                alt='Logo MyAccess'
+                alt="" // L'attribut alt est vide car le lien possède déjà un aria-label complet
                 width={512}
                 height={512}
               />
-              <span className="sr-only">Logo</span>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" className="absolute">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" opacity="0.7"/>
                 <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-start" aria-hidden="true">
               <span className="tracking-tight text-primary">MyAccess</span>
               <span className="text-xs text-muted-foreground">Centres accessibles</span>
             </div>
           </Link>
 
           {user && (
-            <nav className="hidden md:flex gap-6">
+            // Menu de navigation étiqueté pour l'accessibilité
+            <nav className="hidden md:flex gap-6" aria-label="Navigation principale">
               <Link 
-                href ='/dashboard'
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                href="/dashboard"
+                className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
                 Centres
               </Link>
-              {/*<button 
-                onClick={() => window.location.href =('/appointments')}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Mes rendez-vous
-              </button>*/}
               <Link 
-                href ='/help'
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                href="/help"
+                className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
                 Aide
               </Link>
@@ -150,28 +127,26 @@ export function Header({ }: HeaderProps) {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                aria-label='Notifications'
-                onClick={() => window.location.href =('/notifications')}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadNotifications > 0 && (
-                  <Badge 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    variant="destructive"
-                  >
-                    {unreadNotifications}
-                  </Badge>
-                )}
+              {/* Utilisation de asChild pour lier le design de shadcn avec la navigation propre de Next.js */}
+              <Button asChild variant="ghost" size="icon" className="relative">
+                <Link href="/notifications" aria-label="Voir les notifications">
+                  <Bell aria-hidden="true" className="h-5 w-5" />
+                  {unreadNotifications > 0 && (
+                    <Badge 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      variant="destructive"
+                      aria-label={`${unreadNotifications} notifications non lues`}
+                    >
+                      {unreadNotifications}
+                    </Badge>
+                  )}
+                </Link>
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label='Paramètres utilisateurs'>
-                    <User className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" aria-label="Ouvrir le menu utilisateur">
+                    <User aria-hidden="true" className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -180,19 +155,18 @@ export function Header({ }: HeaderProps) {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => window.location.href =('/profile')}>
-                    <User className="mr-2 h-4 w-4" />
+                  {/* Remplacement de window.location par router.push() */}
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    <User aria-hidden="true" className="mr-2 h-4 w-4" />
                     Mon profil
                   </DropdownMenuItem>
-                  {/*<DropdownMenuItem onClick={() => window.location.href =('/appointments')}>
-                    Mes rendez-vous
-                  </DropdownMenuItem>*/}
-                  <DropdownMenuItem onClick={() => window.location.href =('/my-reviews')}>
+                  <DropdownMenuItem onClick={() => router.push('/my-reviews')}>
+                    <Star aria-hidden="true" className="mr-2 h-4 w-4" />
                     Mes avis
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut aria-hidden="true" className="mr-2 h-4 w-4" />
                     Déconnexion
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -200,13 +174,13 @@ export function Header({ }: HeaderProps) {
             </>
           ) : (
             <div className="flex gap-2">
-              <a href='login' className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3">
-                Connexion
-              </a>
-              <a href='signup' className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3">
-                S'inscrire
-              </a>
-
+              {/* Le code lourd des balises <a> est remplacé par les composants propres */}
+              <Button asChild variant="outline">
+                <Link href="/login">Connexion</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">S'inscrire</Link>
+              </Button>
             </div>
           )}
         </div>

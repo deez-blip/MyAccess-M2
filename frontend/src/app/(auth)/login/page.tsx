@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import { Loader2 } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading: authLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,6 +27,16 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Référence pour gérer le focus sur l'erreur globale
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // Déplace le focus sur le message d'erreur lorsqu'il apparaît
+  useEffect(() => {
+    if (generalError && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [generalError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,21 +75,28 @@ export default function LoginPage() {
   const isLoading = isSubmitting || authLoading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
+    // Transformation en <main> pour la structure de la page
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
+      {/* Titre invisible visuellement mais crucial pour la hiérarchie des lecteurs d'écran */}
+      <h1 className="sr-only">Connexion à MyAccess</h1>
+      
       <Card className="w-full max-w-md">
         <CardHeader>
+          {/* Si CardTitle rend un <h3> ou <div>, la hiérarchie est maintenant protégée par le <h1> au-dessus */}
           <CardTitle>Connexion</CardTitle>
           <CardDescription>
             Connectez-vous à votre compte MyAccess
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {generalError && (
               <div
-                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
+                ref={errorRef}
+                tabIndex={-1} // Permet le focus programmatique sans perturber la navigation Tab classique
+                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md outline-none focus:ring-2 focus:ring-destructive"
                 role="alert"
-                aria-live="polite"
+                aria-live="assertive" // Assertive est préférable pour une erreur bloquante
               >
                 {generalError}
               </div>
@@ -151,7 +170,7 @@ export default function LoginPage() {
               <Button type="submit" className="flex-1" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
                     Connexion...
                   </>
                 ) : (
@@ -162,13 +181,14 @@ export default function LoginPage() {
 
             <div className="text-center text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
-              <a className="text-primary hover:underline" href="/signup">
+              {/* Utilisation de Link au lieu de <a> */}
+              <Link className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded" href="/signup">
                 S&apos;inscrire
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,15 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // Focus automatique sur l'erreur générale lorsqu'elle apparaît
+  useEffect(() => {
+    if (generalError && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [generalError]);
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -121,7 +131,14 @@ export default function SignUpPage() {
   const isLoading = isSubmitting || authLoading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
+    <main id="main-content" className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-muted/30 py-12 px-4">
+      <h1 className="sr-only">Création de compte MyAccess</h1>
+      
+      {/* Annonce invisible pour lecteur d'écran lors du changement d'étape */}
+      <div aria-live="polite" className="sr-only">
+        Étape {step} sur 2 : {step === 1 ? "Créer un compte" : "Personnalisez votre profil"}
+      </div>
+
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>
@@ -134,12 +151,14 @@ export default function SignUpPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {generalError && (
               <div
-                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
+                ref={errorRef}
+                tabIndex={-1}
+                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md outline-none focus:ring-2 focus:ring-destructive"
                 role="alert"
-                aria-live="polite"
+                aria-live="assertive"
               >
                 {generalError}
               </div>
@@ -160,10 +179,11 @@ export default function SignUpPage() {
                       }
                       className={errors.firstName ? "border-destructive" : ""}
                       aria-invalid={!!errors.firstName}
+                      aria-describedby={errors.firstName ? "firstName-error" : undefined}
                       disabled={isLoading}
                     />
                     {errors.firstName && (
-                      <p className="text-sm text-destructive mt-1" role="alert">
+                      <p id="firstName-error" className="text-sm text-destructive mt-1" role="alert">
                         {errors.firstName}
                       </p>
                     )}
@@ -181,10 +201,11 @@ export default function SignUpPage() {
                       }
                       className={errors.lastName ? "border-destructive" : ""}
                       aria-invalid={!!errors.lastName}
+                      aria-describedby={errors.lastName ? "lastName-error" : undefined}
                       disabled={isLoading}
                     />
                     {errors.lastName && (
-                      <p className="text-sm text-destructive mt-1" role="alert">
+                      <p id="lastName-error" className="text-sm text-destructive mt-1" role="alert">
                         {errors.lastName}
                       </p>
                     )}
@@ -203,10 +224,11 @@ export default function SignUpPage() {
                     }
                     className={errors.email ? "border-destructive" : ""}
                     aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? "email-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
+                    <p id="email-error" className="text-sm text-destructive mt-1" role="alert">
                       {errors.email}
                     </p>
                   )}
@@ -224,10 +246,11 @@ export default function SignUpPage() {
                     }
                     className={errors.password ? "border-destructive" : ""}
                     aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "password-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.password && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
+                    <p id="password-error" className="text-sm text-destructive mt-1" role="alert">
                       {errors.password}
                     </p>
                   )}
@@ -250,10 +273,11 @@ export default function SignUpPage() {
                       errors.confirmPassword ? "border-destructive" : ""
                     }
                     aria-invalid={!!errors.confirmPassword}
+                    aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
+                    <p id="confirmPassword-error" className="text-sm text-destructive mt-1" role="alert">
                       {errors.confirmPassword}
                     </p>
                   )}
@@ -264,13 +288,13 @@ export default function SignUpPage() {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="mb-3 block">
+                  <h2 className="text-sm font-medium leading-none mb-3 block">
                     Sélectionnez vos besoins d&apos;accessibilité
-                  </Label>
+                  </h2>
                   <p className="text-sm text-muted-foreground mb-4">
                     Cela nous aidera à personnaliser vos résultats de recherche
                   </p>
-                  <div className="space-y-3" role="group" aria-label="Types de handicap">
+                  <div className="space-y-3" role="group" aria-label="Sélectionnez vos types de handicap">
                     {handicapTypes.map((type) => (
                       <div key={type.value} className="flex items-center space-x-2">
                         <Checkbox
@@ -281,7 +305,7 @@ export default function SignUpPage() {
                         />
                         <label
                           htmlFor={type.value}
-                          className="text-sm cursor-pointer"
+                          className="text-sm cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
                           {type.label}
                         </label>
@@ -297,18 +321,18 @@ export default function SignUpPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   onClick={() => setStep(1)}
                   disabled={isLoading}
                 >
                   Retour
                 </Button>
               )}
-              <Button type="submit" className="flex-1" disabled={isLoading}>
+              <Button type="submit" className="flex-1 focus:ring-2 focus:ring-primary focus:ring-offset-2" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {step === 1 ? "..." : "Création..."}
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                    {step === 1 ? "Chargement..." : "Création..."}
                   </>
                 ) : step === 1 ? (
                   "Continuer"
@@ -322,7 +346,7 @@ export default function SignUpPage() {
               <Button
                 type="submit"
                 variant="ghost"
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 disabled={isLoading}
               >
                 Passer cette étape
@@ -331,13 +355,13 @@ export default function SignUpPage() {
 
             <div className="text-center text-sm text-muted-foreground">
               Déjà un compte ?{" "}
-              <a className="text-primary hover:underline" href="/login">
+              <Link className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded" href="/login">
                 Se connecter
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }
