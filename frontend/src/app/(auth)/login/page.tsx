@@ -81,35 +81,49 @@ export default function LoginPage() {
   const isLoading = isSubmitting || authLoading;
 
   return (
-    // Transformation en <main> pour la structure de la page
-    <main id="main-content" className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
-      {/* Titre invisible visuellement mais crucial pour la hiérarchie des lecteurs d'écran */}
+    // Évolution v2 : Fond bleu lumineux et conteneur relatif pour les décorations
+    <main 
+      id="main-content" 
+      className="min-h-screen flex items-center justify-center bg-[#f4f8ff] font-sans p-4 relative overflow-hidden"
+    >
       <h1 className="sr-only">Connexion à MyAccess</h1>
+
+      {/* Cercles de décoration en arrière-plan (masqués pour l'accessibilité) */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none select-none z-0"
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 border border-blue-200/40 rounded-full animate-[spin_240s_linear_infinite]" />
+        <div className="absolute inset-12 border border-dashed border-blue-200/50 rounded-full animate-[spin_180s_linear_infinite]" />
+        <div className="absolute inset-24 border border-blue-100/40 rounded-full" />
+      </div>
       
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          {/* Si CardTitle rend un <h3> ou <div>, la hiérarchie est maintenant protégée par le <h1> au-dessus */}
+      {/* Carte surélevée avec effet de flou et ombre douce */}
+      <Card className="w-full max-w-md relative z-10 bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)]">
+        <CardHeader className="text-center pb-6">
           <CardTitle>Connexion</CardTitle>
           <CardDescription>
             Connectez-vous à votre compte MyAccess
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            
+            {/* Gestion des erreurs globales accessible */}
             {generalError && (
               <div
                 ref={errorRef}
-                tabIndex={-1} // Permet le focus programmatique sans perturber la navigation Tab classique
-                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md outline-none focus:ring-2 focus:ring-destructive"
+                tabIndex={-1} 
+                className="p-3.5 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-xl outline-none focus:ring-2 focus:ring-destructive"
                 role="alert"
-                aria-live="assertive" // Assertive est préférable pour une erreur bloquante
+                aria-live="assertive" 
               >
                 {generalError}
               </div>
             )}
 
-            <div>
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-bold text-[#14284b]">Adresse email</Label>
               <Input
                 id="email"
                 type="email"
@@ -118,7 +132,8 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className={errors.email ? "border-destructive" : ""}
+                // Évolution v2 : Inputs plus grands et arrondis
+                className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.email ? "border-destructive focus-visible:border-destructive" : ""}`}
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "email-error" : undefined}
                 disabled={isLoading}
@@ -126,7 +141,7 @@ export default function LoginPage() {
               {errors.email && (
                 <p
                   id="email-error"
-                  className="text-sm text-destructive mt-1"
+                  className="text-sm font-medium text-destructive mt-1"
                   role="alert"
                 >
                   {errors.email}
@@ -134,8 +149,8 @@ export default function LoginPage() {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="password">Mot de passe</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-bold text-[#14284b]">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
@@ -144,7 +159,7 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className={errors.password ? "border-destructive" : ""}
+                className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.password ? "border-destructive focus-visible:border-destructive" : ""}`}
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? "password-error" : undefined}
                 disabled={isLoading}
@@ -152,7 +167,7 @@ export default function LoginPage() {
               {errors.password && (
                 <p
                   id="password-error"
-                  className="text-sm text-destructive mt-1"
+                  className="text-sm font-medium text-destructive mt-1"
                   role="alert"
                 >
                   {errors.password}
@@ -163,7 +178,7 @@ export default function LoginPage() {
             <div className="text-right">
               <button
                 type="button"
-                className="text-sm text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                className="text-sm font-semibold text-primary hover:text-primary/80 hover:underline focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded-md transition-colors"
                 onClick={() =>
                   alert("Fonctionnalité de récupération de mot de passe à venir")
                 }
@@ -172,12 +187,17 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1" disabled={isLoading}>
+            <div className="pt-2">
+              {/* Évolution v2 : Bouton plein, arrondi, avec ombre */}
+              <Button 
+                type="submit" 
+                className="w-full h-11 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 transition-all" 
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
-                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion...
+                    <Loader2 aria-hidden="true" className="mr-2 h-5 w-5 animate-spin" />
+                    Connexion en cours...
                   </>
                 ) : (
                   "Se connecter"
@@ -185,11 +205,13 @@ export default function LoginPage() {
               </Button>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm font-medium text-[#556987] pt-2">
               Pas encore de compte ?{" "}
-              {/* Utilisation de Link au lieu de <a> */}
-              <Link className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded" href="/signup">
-                S&apos;inscrire
+              <Link 
+                className="text-primary font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded px-1 transition-colors" 
+                href="/signup"
+              >
+                S'inscrire
               </Link>
             </div>
           </form>

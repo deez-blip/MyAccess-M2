@@ -1,137 +1,80 @@
-"use client"
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 
-interface FooterProps {}
+export function Footer() {
+  const currentYear = new Date().getFullYear();
 
-export function Footer({ }: FooterProps) {
   return (
-    // Le rôle contentinfo est implicite avec <footer>, mais c'est une bonne pratique de s'assurer de sa sémantique
-    <footer className="border-t bg-muted/30 mt-auto">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="border-t bg-slate-50 mt-auto" aria-label="Pied de page">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           
           {/* Section Présentation */}
-          <div>
-            <div className="flex items-center mb-2">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
               <Image
                 src="/logo.png"
-                alt="" // Alt vide et aria-hidden car le texte "MyAccess" suit immédiatement
+                alt=""
                 aria-hidden="true"
                 width={512}
                 height={512}
-                className="w-20"
+                className="w-12 h-12 object-contain"
               />
-              {/* Remplacement du <h3> par un <span> stylisé pour ne pas casser la hiérarchie des titres */}
-              <span className="text-xl font-bold text-primary">MyAccess</span>
+              <span className="text-xl font-bold text-[#14284b]">MyAccess</span>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Trouvez des centres de santé accessibles adaptés à vos besoins.
+            <p className="text-sm text-[#556987] leading-relaxed">
+              Votre plateforme de confiance pour trouver des centres de santé accessibles et adaptés à vos besoins.
             </p>
           </div>
 
-          {/* Section Navigation */}
-          <nav aria-label="Navigation principale du pied de page">
-            {/* Utilisation de <h2> pour une structure logique sans saut */}
-            <h2 className="mb-4 font-semibold">Navigation</h2>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link 
-                  href="/"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Accueil
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/dashboard"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Recherche de centres
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/help"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Aide & FAQ
-                </Link>
-              </li>
+          {/* Navigation Principale */}
+          <nav aria-label="Navigation du site">
+            <h2 className="font-semibold text-[#14284b] mb-4">Explorer</h2>
+            <ul className="space-y-3 text-sm text-[#556987]">
+              <li><Link href="/" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Accueil</Link></li>
+              <li><Link href="/dashboard" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Trouver un centre</Link></li>
+              <li><Link href="/help" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Centre d'aide</Link></li>
+              <li><Link href="/sitemap" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Plan du site</Link></li>
             </ul>
           </nav>
 
-          {/* Section Support */}
-          <nav aria-label="Liens de support">
-            <h2 className="mb-4 font-semibold">Support</h2>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link 
-                  href="/contact"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/accessibility"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Accessibilité du site
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/sitemap"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Plan du site
-                </Link>
-              </li>
+          {/* Navigation Légal */}
+          <nav aria-label="Informations légales">
+            <h2 className="font-semibold text-[#14284b] mb-4">Légal</h2>
+            <ul className="space-y-3 text-sm text-[#556987]">
+              <li><Link href="/cgu" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">CGU</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Politique de confidentialité</Link></li>
+              <li><Link href="/legal" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Mentions légales</Link></li>
+              <li><Link href="/accessibility" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">Accessibilité</Link></li>
             </ul>
           </nav>
 
-          {/* Section Légal */}
-          <nav aria-label="Liens légaux">
-            <h2 className="mb-4 font-semibold">Légal</h2>
-            <ul className="space-y-2 text-sm">
+          {/* Contact Rapide */}
+          <div>
+            <h2 className="font-semibold text-[#14284b] mb-4">Contact</h2>
+            <ul className="space-y-3 text-sm text-[#556987]">
               <li>
-                <Link 
-                  href="/legal"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  Mentions légales
+                <Link href="/contact" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded px-1">
+                  Page de contact
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/privacy"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                <a 
+                  href="mailto:support@accessisante.fr"
+                  className="text-primary font-medium hover:underline focus-visible:ring-2 focus-visible:ring-primary rounded px-1"
                 >
-                  Politique de confidentialité
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/cgu"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  CGU
-                </Link>
+                  support@accessisante.fr
+                </a>
               </li>
             </ul>
-          </nav>
+          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} MyAccess. Tous droits réservés.</p>
-          <p className="mt-2">
-            Plateforme dédiée à l'accessibilité des centres de santé pour tous.
-          </p>
+        {/* Ligne de Copyright */}
+        <div className="mt-12 pt-8 border-t border-slate-200 text-center text-sm text-[#556987]">
+          <p>© {currentYear} MyAccess. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

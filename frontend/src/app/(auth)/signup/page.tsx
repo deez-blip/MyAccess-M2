@@ -131,7 +131,8 @@ export default function SignUpPage() {
   const isLoading = isSubmitting || authLoading;
 
   return (
-    <main id="main-content" className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-muted/30 py-12 px-4">
+    // Évolution v2 : Fond bleu lumineux et conteneur relatif pour les décorations
+    <main id="main-content" className="min-h-screen flex items-center justify-center bg-[#f4f8ff] font-sans p-4 relative overflow-hidden">
       <h1 className="sr-only">Création de compte MyAccess</h1>
       
       {/* Annonce invisible pour lecteur d'écran lors du changement d'étape */}
@@ -139,24 +140,37 @@ export default function SignUpPage() {
         Étape {step} sur 2 : {step === 1 ? "Créer un compte" : "Personnalisez votre profil"}
       </div>
 
-      <Card className="w-full max-w-md">
-        <CardHeader>
+      {/* Cercles de décoration en arrière-plan (masqués pour l'accessibilité) */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none select-none z-0"
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 border border-blue-200/40 rounded-full animate-[spin_240s_linear_infinite]" />
+        <div className="absolute inset-12 border border-dashed border-blue-200/50 rounded-full animate-[spin_180s_linear_infinite]" />
+        <div className="absolute inset-24 border border-blue-100/40 rounded-full" />
+      </div>
+
+      {/* Carte surélevée avec effet de flou et ombre douce */}
+      <Card className="w-full max-w-md relative z-10 bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] my-12">
+        <CardHeader className="text-center pb-6">
           <CardTitle>
             {step === 1 ? "Créer un compte" : "Personnalisez votre profil"}
           </CardTitle>
           <CardDescription>
             {step === 1
-              ? "Créez votre compte pour accéder à toutes les fonctionnalités"
-              : "Configurez vos préférences d'accessibilité (optionnel mais recommandé)"}
+              ? "Rejoignez MyAccess pour trouver des centres adaptés"
+              : "Configurez vos préférences d'accessibilité (recommandé)"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            
+            {/* Gestion des erreurs globales accessible */}
             {generalError && (
               <div
                 ref={errorRef}
                 tabIndex={-1}
-                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md outline-none focus:ring-2 focus:ring-destructive"
+                className="p-3.5 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-xl outline-none focus:ring-2 focus:ring-destructive"
                 role="alert"
                 aria-live="assertive"
               >
@@ -165,10 +179,10 @@ export default function SignUpPage() {
             )}
 
             {step === 1 && (
-              <>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">Prénom</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="firstName" className="text-sm font-bold text-[#14284b]">Prénom</Label>
                     <Input
                       id="firstName"
                       type="text"
@@ -177,20 +191,20 @@ export default function SignUpPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, firstName: e.target.value })
                       }
-                      className={errors.firstName ? "border-destructive" : ""}
+                      className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.firstName ? "border-destructive focus-visible:border-destructive" : ""}`}
                       aria-invalid={!!errors.firstName}
                       aria-describedby={errors.firstName ? "firstName-error" : undefined}
                       disabled={isLoading}
                     />
                     {errors.firstName && (
-                      <p id="firstName-error" className="text-sm text-destructive mt-1" role="alert">
+                      <p id="firstName-error" className="text-sm font-medium text-destructive mt-1" role="alert">
                         {errors.firstName}
                       </p>
                     )}
                   </div>
 
-                  <div>
-                    <Label htmlFor="lastName">Nom</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lastName" className="text-sm font-bold text-[#14284b]">Nom</Label>
                     <Input
                       id="lastName"
                       type="text"
@@ -199,21 +213,21 @@ export default function SignUpPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, lastName: e.target.value })
                       }
-                      className={errors.lastName ? "border-destructive" : ""}
+                      className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.lastName ? "border-destructive focus-visible:border-destructive" : ""}`}
                       aria-invalid={!!errors.lastName}
                       aria-describedby={errors.lastName ? "lastName-error" : undefined}
                       disabled={isLoading}
                     />
                     {errors.lastName && (
-                      <p id="lastName-error" className="text-sm text-destructive mt-1" role="alert">
+                      <p id="lastName-error" className="text-sm font-medium text-destructive mt-1" role="alert">
                         {errors.lastName}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="email">Email</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-bold text-[#14284b]">Adresse email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -222,20 +236,20 @@ export default function SignUpPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className={errors.email ? "border-destructive" : ""}
+                    className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.email ? "border-destructive focus-visible:border-destructive" : ""}`}
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? "email-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.email && (
-                    <p id="email-error" className="text-sm text-destructive mt-1" role="alert">
+                    <p id="email-error" className="text-sm font-medium text-destructive mt-1" role="alert">
                       {errors.email}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="password">Mot de passe</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-sm font-bold text-[#14284b]">Mot de passe</Label>
                   <Input
                     id="password"
                     type="password"
@@ -244,20 +258,20 @@ export default function SignUpPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className={errors.password ? "border-destructive" : ""}
+                    className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.password ? "border-destructive focus-visible:border-destructive" : ""}`}
                     aria-invalid={!!errors.password}
                     aria-describedby={errors.password ? "password-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.password && (
-                    <p id="password-error" className="text-sm text-destructive mt-1" role="alert">
+                    <p id="password-error" className="text-sm font-medium text-destructive mt-1" role="alert">
                       {errors.password}
                     </p>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword" className="text-sm font-bold text-[#14284b]">Confirmer le mot de passe</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -269,43 +283,42 @@ export default function SignUpPage() {
                         confirmPassword: e.target.value,
                       })
                     }
-                    className={
-                      errors.confirmPassword ? "border-destructive" : ""
-                    }
+                    className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.confirmPassword ? "border-destructive focus-visible:border-destructive" : ""}`}
                     aria-invalid={!!errors.confirmPassword}
                     aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
                     disabled={isLoading}
                   />
                   {errors.confirmPassword && (
-                    <p id="confirmPassword-error" className="text-sm text-destructive mt-1" role="alert">
+                    <p id="confirmPassword-error" className="text-sm font-medium text-destructive mt-1" role="alert">
                       {errors.confirmPassword}
                     </p>
                   )}
                 </div>
-              </>
+              </div>
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-6 pt-2">
                 <div>
-                  <h2 className="text-sm font-medium leading-none mb-3 block">
+                  <h2 className="text-sm font-bold text-[#14284b] mb-1 block">
                     Sélectionnez vos besoins d&apos;accessibilité
                   </h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Cela nous aidera à personnaliser vos résultats de recherche
+                  <p className="text-sm text-[#556987] font-medium mb-5">
+                    Cela nous aidera à personnaliser vos résultats de recherche.
                   </p>
-                  <div className="space-y-3" role="group" aria-label="Sélectionnez vos types de handicap">
+                  <div className="space-y-3.5" role="group" aria-label="Sélectionnez vos types de handicap">
                     {handicapTypes.map((type) => (
-                      <div key={type.value} className="flex items-center space-x-2">
+                      <div key={type.value} className="flex items-center space-x-3">
                         <Checkbox
                           id={type.value}
                           checked={formData.handicapTypes.includes(type.value)}
                           onCheckedChange={() => toggleHandicapType(type.value)}
                           disabled={isLoading}
+                          className="rounded-[4px] border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                         <label
                           htmlFor={type.value}
-                          className="text-sm cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          className="text-sm font-medium text-[#14284b] cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
                           {type.label}
                         </label>
@@ -316,22 +329,26 @@ export default function SignUpPage() {
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-3 pt-4">
               {step === 2 && (
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1 focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  className="flex-1 h-11 rounded-xl font-bold border-slate-200 text-[#556987] hover:bg-slate-50 transition-all focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
                   onClick={() => setStep(1)}
                   disabled={isLoading}
                 >
                   Retour
                 </Button>
               )}
-              <Button type="submit" className="flex-1 focus:ring-2 focus:ring-primary focus:ring-offset-2" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="flex-[2] h-11 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 transition-all focus:ring-2 focus:ring-primary/50 focus:ring-offset-2" 
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
-                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="mr-2 h-5 w-5 animate-spin" />
                     {step === 1 ? "Chargement..." : "Création..."}
                   </>
                 ) : step === 1 ? (
@@ -346,16 +363,16 @@ export default function SignUpPage() {
               <Button
                 type="submit"
                 variant="ghost"
-                className="w-full focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="w-full h-11 rounded-xl font-semibold text-[#556987] hover:bg-slate-50 hover:text-[#14284b] transition-all focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
                 disabled={isLoading}
               >
                 Passer cette étape
               </Button>
             )}
 
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm font-medium text-[#556987] pt-2">
               Déjà un compte ?{" "}
-              <Link className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded" href="/login">
+              <Link className="text-primary font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded px-1 transition-colors" href="/login">
                 Se connecter
               </Link>
             </div>
