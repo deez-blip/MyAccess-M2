@@ -33,9 +33,7 @@ export default function SitemapPage() {
             <section aria-labelledby="public-title">
               <Card className="bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)]">
                 <CardHeader>
-                  <CardTitle>
-                    <h2 id="public-title" className="text-xl">Pages publiques</h2>
-                  </CardTitle>
+                  <CardTitle><h2 id="public-title" className="text-xl">Pages publiques</h2></CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 font-medium text-[#556987]">
@@ -59,9 +57,7 @@ export default function SitemapPage() {
             <section aria-labelledby="user-title">
               <Card className="bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)]">
                 <CardHeader>
-                  <CardTitle>
-                    <h2 id="user-title" className="text-xl">Espace utilisateur</h2>
-                  </CardTitle>
+                  <CardTitle><h2 id="user-title" className="text-xl">Espace utilisateur</h2></CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 font-medium text-[#556987]">
@@ -85,9 +81,7 @@ export default function SitemapPage() {
             <section aria-labelledby="centers-title">
               <Card className="bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)]">
                 <CardHeader>
-                  <CardTitle>
-                    <h2 id="centers-title" className="text-xl">Centres</h2>
-                  </CardTitle>
+                  <CardTitle><h2 id="centers-title" className="text-xl">Centres</h2></CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 font-medium text-[#556987]">
@@ -105,9 +99,7 @@ export default function SitemapPage() {
             <section aria-labelledby="legal-title">
               <Card className="bg-white/95 backdrop-blur-sm border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)]">
                 <CardHeader>
-                  <CardTitle>
-                    <h2 id="legal-title" className="text-xl">Support & Légal</h2>
-                  </CardTitle>
+                  <CardTitle><h2 id="legal-title" className="text-xl">Support & Légal</h2></CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 font-medium text-[#556987]">
