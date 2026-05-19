@@ -22,7 +22,7 @@ export function Footer() {
                 height={512}
                 className="w-12 h-12 object-contain"
               />
-              <span className="text-xl font-bold text-[#14284b]">MyAccess</span>
+              <span className="text-xl font-bold text-[#0052cc]">MyAccess</span>
             </div>
             <p className="text-sm text-[#556987] leading-relaxed">
               Votre plateforme de confiance pour trouver des centres de santé accessibles et adaptés à vos besoins.
