@@ -1,124 +1,134 @@
 "use client"
 
 import Image from "next/image";
+import Link from "next/link";
 
-interface FooterProps {
-}
+interface FooterProps {}
 
-export function Footer({  }: FooterProps) {
+export function Footer({ }: FooterProps) {
   return (
+    // Le rôle contentinfo est implicite avec <footer>, mais c'est une bonne pratique de s'assurer de sa sémantique
     <footer className="border-t bg-muted/30 mt-auto">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          {/* Section Présentation */}
           <div>
-            <div className="flex items-center">
-            <Image
-              src={"/logo.png"}
-              alt='Logo MyAccess'
-              width={512}
-              height={512}
-              className="w-20"
-            />
-            <h3 className="text-xl">MyAccess</h3>
+            <div className="flex items-center mb-2">
+              <Image
+                src="/logo.png"
+                alt="" // Alt vide et aria-hidden car le texte "MyAccess" suit immédiatement
+                aria-hidden="true"
+                width={512}
+                height={512}
+                className="w-20"
+              />
+              {/* Remplacement du <h3> par un <span> stylisé pour ne pas casser la hiérarchie des titres */}
+              <span className="text-xl font-bold text-primary">MyAccess</span>
             </div>
             <p className="text-muted-foreground text-sm">
               Trouvez des centres de santé accessibles adaptés à vos besoins.
             </p>
           </div>
 
-          <div>
-            <h4 className="mb-4">Navigation</h4>
+          {/* Section Navigation */}
+          <nav aria-label="Navigation principale du pied de page">
+            {/* Utilisation de <h2> pour une structure logique sans saut */}
+            <h2 className="mb-4 font-semibold">Navigation</h2>
             <ul className="space-y-2 text-sm">
               <li>
-                <a 
-                  href={'/'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Accueil
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'dashboard'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/dashboard"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Recherche de centres
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'help'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/help"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Aide & FAQ
-                </a>
+                </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h4 className="mb-4">Support</h4>
+          {/* Section Support */}
+          <nav aria-label="Liens de support">
+            <h2 className="mb-4 font-semibold">Support</h2>
             <ul className="space-y-2 text-sm">
               <li>
-                <a 
-                  href={'contact'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/contact"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'accessibility'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/accessibility"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Accessibilité du site
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'sitemap'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/sitemap"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Plan du site
-                </a>
+                </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h4 className="mb-4">Légal</h4>
+          {/* Section Légal */}
+          <nav aria-label="Liens légaux">
+            <h2 className="mb-4 font-semibold">Légal</h2>
             <ul className="space-y-2 text-sm">
               <li>
-                <a 
-                  href={'legal'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/legal"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Mentions légales
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'privacy'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/privacy"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   Politique de confidentialité
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href={'cgu'}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                <Link 
+                  href="/cgu"
+                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   CGU
-                </a>
+                </Link>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
+        {/* Copyright */}
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© {new Date(Date.now()).getFullYear()} MyAccess. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} MyAccess. Tous droits réservés.</p>
           <p className="mt-2">
             Plateforme dédiée à l'accessibilité des centres de santé pour tous.
           </p>

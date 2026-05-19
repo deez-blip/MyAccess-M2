@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FilterPanel } from './_components/FilterPanel';
 import { CenterCard } from './_components/CenterCard';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const MapView = dynamic(() => import('./_components/MapView').then((mod) => mod.MapView), { 
   ssr: false,
@@ -23,6 +23,8 @@ interface DashboardProps {
 
 export default function DashboardClient({ user, onNavigate }: DashboardProps) {
   const searchParams = useSearchParams();
+  const router = useRouter(); // Remplacement de window.location par le routeur Next.js
+  
   const [searchQuery, setSearchQuery] = useState( searchParams.get("q") ?? '');
   const [selectedHandicaps, setSelectedHandicaps] = useState<string[]>(
     user?.handicapType?.split(/[;,]/).filter(Boolean) || []
@@ -71,7 +73,6 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
 
   const filteredCenters = useMemo(() => {
     return centers.filter(center => {
-      // Search query filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (
@@ -84,12 +85,10 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
         }
       }
 
-      // Score filter
       if (center.globalScore < minScore) {
         return false;
       }
 
-      // Center type filter
       if (centerType !== 'all') {
         if (centerType === 'both' && center.type !== 'both') {
           return false;
@@ -105,35 +104,40 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
   }, [centers, searchQuery, minScore, centerType]);
 
   const handleViewDetails = (center: Center) => {
-    if(typeof window === "undefined") return;
-    window.location.href = "/center/" + center.id
+    // Navigation fluide respectueuse des lecteurs d'écran et du focus
+    router.push(`/center/${center.id}`);
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    // Transformation en <main> pour les repères de navigation (Landmarks)
+    <main id="main-content" className="min-h-screen bg-muted/30">
+      <h1 className="sr-only">Recherche et liste des centres de santé</h1>
+      
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar */}
         <div className="mb-6">
           <div className="flex gap-3 max-w-3xl">
             <div className="flex-1 relative border rounded">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              {/* Ajout d'un label explicite pour le champ de recherche */}
+              <label htmlFor="search-input" className="sr-only">
+                Rechercher par ville, code postal, nom du centre
+              </label>
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
+                id="search-input"
+                type="search"
                 placeholder="Rechercher par ville, code postal, nom du centre..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-white"
               />
             </div>
-            {/*<Button variant="outline" className="gap-2">
-              <Map className="h-4 w-4" />
-              Itinéraire
-            </Button>*/}
           </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
+          <aside className="lg:col-span-1" aria-label="Filtres de recherche">
             <FilterPanel
               selectedHandicaps={selectedHandicaps}
               onHandicapChange={setSelectedHandicaps}
@@ -142,23 +146,24 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
               centerType={centerType}
               onCenterTypeChange={setCenterType}
             />
-          </div>
+          </aside>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <section className="lg:col-span-3" aria-label="Résultats de recherche">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-muted-foreground">
+              {/* aria-live permet d'annoncer les changements de résultats vocalement */}
+              <p className="text-muted-foreground" aria-live="polite" aria-atomic="true">
                 {filteredCenters.length} centre{filteredCenters.length > 1 ? 's' : ''} trouvé{filteredCenters.length > 1 ? 's' : ''}
               </p>
 
               <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-                <TabsList>
-                  <TabsTrigger value="map" className="gap-2" aria-label='Afficher la carte des centres'>
-                    <Map className="h-4 w-4" />
+                <TabsList aria-label="Modes d'affichage des résultats">
+                  <TabsTrigger value="map" className="gap-2" aria-label="Afficher la carte des centres">
+                    <Map aria-hidden="true" className="h-4 w-4" />
                     Carte
                   </TabsTrigger>
-                  <TabsTrigger value="list" className="gap-2" aria-label='Afficher la liste des centres'>
-                    <List className="h-4 w-4" />
+                  <TabsTrigger value="list" className="gap-2" aria-label="Afficher la liste des centres">
+                    <List aria-hidden="true" className="h-4 w-4" />
                     Liste
                   </TabsTrigger>
                 </TabsList>
@@ -166,11 +171,14 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
             </div>
 
             {isLoading ? (
-              <div className="text-center py-12">
+              // Rôle status pour les chargements
+              <div className="text-center py-12" role="status" aria-live="polite">
                 <p className="text-muted-foreground">Chargement des centres...</p>
+                <span className="sr-only">Veuillez patienter</span>
               </div>
             ) : error ? (
-              <div className="text-center py-12">
+              // Rôle alert pour les erreurs afin d'interrompre l'utilisateur
+              <div className="text-center py-12" role="alert" aria-live="assertive">
                 <p className="text-destructive">{error}</p>
                 <Button
                   variant="link"
@@ -199,7 +207,7 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
                     />
                   ))
                 ) : (
-                  <div className="col-span-2 text-center py-12">
+                  <div className="col-span-2 text-center py-12" role="status" aria-live="polite">
                     <p className="text-muted-foreground">
                       Aucun centre ne correspond à vos critères de recherche.
                     </p>
@@ -219,9 +227,9 @@ export default function DashboardClient({ user, onNavigate }: DashboardProps) {
                 )}
               </div>
             )}
-          </div>
+          </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
