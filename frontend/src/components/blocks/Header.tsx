@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, LogOut, Menu } from 'lucide-react';
+import { User, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Center, User as UserType } from '@/types';
 import { useEffect, useState } from 'react';
-import { getCenter, getCurrentUser, getNotifications, setCurrentUser } from '@/lib/mockData';
+import { getCenter, getCurrentUser, setCurrentUser } from '@/lib/mockData';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +45,6 @@ export function Header({ }: HeaderProps) {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedCenterId, setSelectedCenterId] = useState<string | null>(null);
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   // Load user on mount
     /*useEffect(() => {
@@ -56,15 +55,6 @@ export function Header({ }: HeaderProps) {
       }
     }, []);*/
   
-    // Update unread notifications count
-  useEffect(() => {
-    if (user) {
-      const notifications = getNotifications(user.id);
-      const unread = notifications.filter(n => !n.read).length;
-      setUnreadNotifications(unread);
-    }
-  }, [user, currentPage]);
-
   // Load center when needed
   useEffect(() => {
     if (selectedCenterId && (currentPage === 'center' || currentPage === 'booking')) {
@@ -123,81 +113,48 @@ export function Header({ }: HeaderProps) {
             </div>
           </Link>
 
-          {user && (
-            <nav className="hidden md:flex gap-6">
+          <nav className="hidden md:flex gap-6 items-center">
+            <Link 
+              href='/dashboard'
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+            >
+              Rechercher un centre
+            </Link>
+            {user && (
               <Link 
-                href ='/dashboard'
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Centres
-              </Link>
-              {/*<button 
-                onClick={() => window.location.href =('/appointments')}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Mes rendez-vous
-              </button>*/}
-              <Link 
-                href ='/help'
+                href='/help'
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 Aide
               </Link>
-            </nav>
-          )}
+            )}
+          </nav>
         </div>
 
         <div className="flex items-center gap-2">
           {user ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                aria-label='Notifications'
-                onClick={() => window.location.href =('/notifications')}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadNotifications > 0 && (
-                  <Badge 
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    variant="destructive"
-                  >
-                    {unreadNotifications}
-                  </Badge>
-                )}
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label='Paramètres utilisateurs'>
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm">{user.firstName} {user.lastName}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => window.location.href =('/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    Mon profil
-                  </DropdownMenuItem>
-                  {/*<DropdownMenuItem onClick={() => window.location.href =('/appointments')}>
-                    Mes rendez-vous
-                  </DropdownMenuItem>*/}
-                  <DropdownMenuItem onClick={() => window.location.href =('/my-reviews')}>
-                    Mes avis
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label='Paramètres utilisateurs'>
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm">{user.firstName} {user.lastName}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => window.location.href =('/my-reviews')}>
+                  Mes avis
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <div className="flex gap-2">
               <a href='login' className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-9 px-4 py-2 has-[>svg]:px-3">
