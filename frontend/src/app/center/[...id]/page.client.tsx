@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react';
-import { MapPin, Phone, Mail, Clock, Globe, ArrowLeft, Calendar, Star, ThumbsUp, Navigation } from 'lucide-react';
-import { Center } from '@/types';
+import { MapPin, Phone, Mail, Clock, Globe, ArrowLeft, Calendar, Star, ThumbsUp, Navigation, Pencil, Trash2 } from 'lucide-react';
+import { Center, LocationKind, ReviewAccessibilityItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,63 @@ interface CenterDetailsClientProps {
 
 }
 
+const locationKindLabels: Record<LocationKind, string> = {
+  individual_or_small_practice: 'Cabinet individuel / petit',
+  probable_group_practice: 'Cabinet de groupe',
+  probable_specialist_group: 'Groupe spécialiste',
+  probable_health_center_or_shared_site: 'Centre / lieu partagé',
+};
+
+function getOfferLabel(center: Center) {
+  if (center.offerTypes?.includes('healthcare') || center.source === 'healthcare') {
+    return 'Lieu de soins';
+  }
+  return 'Lieu de soins';
+}
+
+function getDigitalAccessBadges(center: Center) {
+  const digitalAccess = center.digitalAccess;
+  if (!digitalAccess) return [];
+
+  return [
+    digitalAccess.hasDoctolib ? 'Doctolib' : null,
+    digitalAccess.hasOnlineBooking ? 'RDV en ligne' : null,
+    digitalAccess.hasTeleconsultation ? 'Télémédecine' : null,
+    digitalAccess.bookingMethods.some((method) => method === 'mail' || method === 'sms')
+      ? 'Mail/SMS'
+      : null,
+    digitalAccess.hasWebsite ? 'Site web' : null,
+  ].filter(Boolean) as string[];
+}
+
+function normalizeExternalUrl(url?: string | null) {
+  if (!url) return null;
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return null;
+  return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+}
+
+function getReviewItemStatusLabel(status: ReviewAccessibilityItem['status']) {
+  if (status === 'reported_absent') return 'Absent';
+  if (status === 'reported_present') return 'Présent';
+  if (status === 'custom_present') return 'Ajouté';
+  return 'Confirmé';
+}
+
+function getReviewItemBadgeVariant(
+  status: ReviewAccessibilityItem['status']
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (status === 'reported_absent') return 'destructive';
+  if (status === 'confirmed_present') return 'secondary';
+  if (status === 'custom_present') return 'default';
+  return 'outline';
+}
+
 export default function CenterDetailsClient({ idCenter }: CenterDetailsClientProps) {
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [reviewActionError, setReviewActionError] = useState<string | null>(null);
 
   const { user, session } = useAuth()
   
@@ -64,7 +119,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
           </p>
           <Button
             variant="link"
-            onClick={() => window.location.href = (user ? '/dashboard' : '/')}
+            onClick={() => window.location.href = '/dashboard'}
             className="mt-2"
           >
             Retour à la recherche
@@ -76,13 +131,13 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
 
   const getScoreColor = (score: number) => {
     if (score >= 4.5) return 'text-green-600';
-    if (score >= 3.5) return 'text-yellow-600';
+    if (score >= 2.5) return 'text-yellow-600';
     return 'text-orange-600';
   };
 
   const getProgressColor = (score: number) => {
     if (score >= 4.5) return 'bg-green-500';
-    if (score >= 3.5) return 'bg-yellow-500';
+    if (score >= 2.5) return 'bg-yellow-500';
     return 'bg-orange-500';
   };
 
@@ -91,10 +146,45 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}&travelmode=transit`, '_blank');
   };
 
-  const onBookAppointment = (center: Center) => {
-    /*setSelectedCenterId(center.id);
-    setSelectedCenter(center);
-    setCurrentPage('booking');*/
+  const isHealthcareLocation = center.id.startsWith('healthcare:');
+  const mainProfession = center.professions?.[0]?.label;
+  const locationKindLabel = center.locationKind ? locationKindLabels[center.locationKind] : null;
+  const digitalAccessBadges = getDigitalAccessBadges(center);
+  const phone = center.phone?.trim();
+  const email = center.email?.trim();
+  const websiteUrl = normalizeExternalUrl(center.website || center.digitalAccess?.websiteUrl);
+  const appointmentUrl = normalizeExternalUrl(center.digitalAccess?.doctolibUrl || center.digitalAccess?.websiteUrl || center.website);
+  const loginRedirectUrl = `/login?redirect=${encodeURIComponent(`/center/${center.id}`)}`;
+  const canOpenRatingForm = Boolean(user && session?.accessToken);
+  const userReviewCount = user
+    ? center.reviews.filter((review) => review.userId === user.id).length
+    : 0;
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!session?.accessToken) {
+      setReviewActionError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
+    if (!window.confirm('Supprimer cet avis ? Cette action est définitive.')) {
+      return;
+    }
+
+    try {
+      setReviewActionError(null);
+      setDeletingReviewId(reviewId);
+      await centersApi.deleteReview(center.id, reviewId, session.accessToken);
+      if (editingReviewId === reviewId) setEditingReviewId(null);
+      await loadCenter();
+    } catch (err) {
+      setReviewActionError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de supprimer l'avis"
+      );
+    } finally {
+      setDeletingReviewId(null);
+    }
   };
 
   return (
@@ -104,7 +194,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
         <Button
           variant="ghost"
           className="mb-4"
-          onClick={() => window.location.href = (user ? '/dashboard' : '/')}
+          onClick={() => window.location.href = '/dashboard'}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour à la recherche
@@ -130,9 +220,17 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <Badge>
-                        {center.type === 'both' ? 'Vaccination & Dépistage' : 
-                         center.type === 'vaccination' ? 'Vaccination' : 'Dépistage'}
+                        {getOfferLabel(center)}
                       </Badge>
+                      {mainProfession && (
+                        <Badge variant="secondary">{mainProfession}</Badge>
+                      )}
+                      {locationKindLabel && (
+                        <Badge variant="outline">{locationKindLabel}</Badge>
+                      )}
+                      {isHealthcareLocation && (
+                        <Badge variant="outline">Source Santé.fr / ANS</Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -143,21 +241,28 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <span>{center.address}, {center.postalCode} {center.city}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a href={`tel:${center.phone}`} className="hover:underline">{center.phone}</a>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${center.email}`} className="hover:underline">{center.email}</a>
-                  </div>
-                  {center.website && (
+                  {phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a href={`tel:${phone}`} className="hover:underline">{phone}</a>
+                    </div>
+                  )}
+                  {email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a href={`mailto:${email}`} className="hover:underline">{email}</a>
+                    </div>
+                  )}
+                  {websiteUrl && (
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <a href={center.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
                         Site web
                       </a>
                     </div>
+                  )}
+                  {!phone && !email && !websiteUrl && (
+                    <p className="text-sm text-muted-foreground">Contact non renseigné.</p>
                   )}
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
@@ -170,7 +275,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
             {/* Accessibility Scores */}
             <Card>
               <CardHeader>
-                <CardTitle>Scores d'accessibilité</CardTitle>
+                <CardTitle>Scores d&apos;accessibilité</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -190,7 +295,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span>Accessibilité numérique</span>
+                    <span>{isHealthcareLocation ? 'Disponibilité numérique' : 'Accessibilité numérique'}</span>
                     <span className={`${getScoreColor(center.accessibilityScore.numerique)}`}>
                       {center.accessibilityScore.numerique}/5
                     </span>
@@ -203,9 +308,33 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                   </div>
                 </div>
 
+                {isHealthcareLocation && center.digitalAccess && (
+                  <div className="rounded-md border p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-medium">Canaux numériques</span>
+                      <span className="text-xs text-muted-foreground">
+                        Accessibilité numérique non vérifiée
+                      </span>
+                    </div>
+                    {digitalAccessBadges.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {digitalAccessBadges.map((label) => (
+                          <Badge key={label} variant="secondary">
+                            {label}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Aucun canal numérique identifié dans les données source.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span>Qualité de l'accueil</span>
+                    <span>Qualité de l&apos;accueil</span>
                     <span className={`${getScoreColor(center.accessibilityScore.accueil)}`}>
                       {center.accessibilityScore.accueil}/5
                     </span>
@@ -242,20 +371,48 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Avis et retours d'expérience</CardTitle>
-                  {user && (
-                    <Button onClick={() => setShowRatingForm(!showRatingForm)}>
-                      {showRatingForm ? 'Annuler' : 'Donner mon avis'}
+                  <CardTitle>Avis et retours d&apos;expérience</CardTitle>
+                  {canOpenRatingForm ? (
+                    <Button
+                      onClick={() => {
+                        setEditingReviewId(null);
+                        setReviewActionError(null);
+                        setShowRatingForm(!showRatingForm);
+                      }}
+                    >
+                      {showRatingForm
+                        ? 'Annuler'
+                        : userReviewCount > 0
+                          ? 'Donner un autre avis'
+                          : 'Donner mon avis'}
                     </Button>
-                  )}
+                  ) : !user ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.location.href = loginRedirectUrl}
+                    >
+                      Se connecter pour donner un avis
+                    </Button>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent>
-                {showRatingForm ? (
+                {reviewActionError && (
+                  <div
+                    className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+                    role="alert"
+                    aria-live="polite"
+                  >
+                    {reviewActionError}
+                  </div>
+                )}
+
+                {showRatingForm && canOpenRatingForm ? (
                   <RatingForm
                     center={center}
                     user={user!}
                     token={session?.accessToken || ""}
+                    review={null}
                     onSubmit={() => {
                       setShowRatingForm(false);
                       loadCenter();
@@ -268,50 +425,85 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                       <div className="space-y-4">
                         {center.reviews.map((review) => (
                           <div key={review.id} className="border-b last:border-0 pb-4 last:pb-0">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p>{review.userName}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {new Date(review.date).toLocaleDateString('fr-FR')}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1 text-yellow-600">
-                                <Star className="h-4 w-4" fill="currentColor" />
-                                <span>
-                                  {((review.scores.physique + review.scores.numerique + review.scores.accueil) / 3).toFixed(1)}
-                                </span>
-                              </div>
-                            </div>
+                            {editingReviewId === review.id && canOpenRatingForm ? (
+                              <RatingForm
+                                center={center}
+                                user={user!}
+                                token={session?.accessToken || ""}
+                                review={review}
+                                onSubmit={() => {
+                                  setEditingReviewId(null);
+                                  loadCenter();
+                                }}
+                                onCancel={() => setEditingReviewId(null)}
+                              />
+                            ) : (
+                              <>
+                                <div className="flex justify-between items-start gap-3 mb-2">
+                                  <div>
+                                    <p className="font-medium">{review.userName}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {new Date(review.date).toLocaleDateString('fr-FR')}
+                                    </p>
+                                  </div>
 
-                            <div className="grid grid-cols-3 gap-2 mb-2 text-sm">
-                              <div className="text-center p-2 bg-muted/50 rounded">
-                                <p className="text-muted-foreground">Physique</p>
-                                <p>{review.scores.physique}/5</p>
-                              </div>
-                              <div className="text-center p-2 bg-muted/50 rounded">
-                                <p className="text-muted-foreground">Numérique</p>
-                                <p>{review.scores.numerique}/5</p>
-                              </div>
-                              <div className="text-center p-2 bg-muted/50 rounded">
-                                <p className="text-muted-foreground">Accueil</p>
-                                <p>{review.scores.accueil}/5</p>
-                              </div>
-                            </div>
+                                  {user?.id === review.userId && (
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setShowRatingForm(false);
+                                          setReviewActionError(null);
+                                          setEditingReviewId(review.id);
+                                        }}
+                                      >
+                                        <Pencil className="mr-1 h-4 w-4" />
+                                        Modifier
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={deletingReviewId === review.id}
+                                        onClick={() => handleDeleteReview(review.id)}
+                                      >
+                                        <Trash2 className="mr-1 h-4 w-4" />
+                                        {deletingReviewId === review.id ? 'Suppression...' : 'Supprimer'}
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
 
-                            <p className="text-sm mb-2">{review.comment}</p>
+                                <p className="text-sm mb-2">{review.comment}</p>
 
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <ThumbsUp className="h-4 w-4 mr-1" />
-                                Utile ({review.helpfulCount})
-                              </Button>
-                            </div>
+                                {review.accessibilityItems?.length ? (
+                                  <div className="mb-2 flex flex-wrap gap-2">
+                                    {review.accessibilityItems.map((item) => (
+                                      <Badge
+                                        key={`${review.id}-${item.criterionKey}-${item.status}`}
+                                        variant={getReviewItemBadgeVariant(item.status)}
+                                      >
+                                        {getReviewItemStatusLabel(item.status)} · {item.label}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : null}
+
+                                <div className="flex items-center gap-2">
+                                  <Button variant="ghost" size="sm">
+                                    <ThumbsUp className="h-4 w-4 mr-1" />
+                                    Utile ({review.helpfulCount})
+                                  </Button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
-                        Aucun avis pour le moment. Soyez le premier à partager votre expérience !
+                        Aucun avis pour le moment.
+                        {!user ? ' Connectez-vous pour partager votre expérience.' : ''}
                       </p>
                     )}
                   </>
@@ -328,11 +520,13 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                   <Button 
                     className="w-full" 
                     size="lg"
-                    onClick={() => onBookAppointment(center)}
-                    disabled
+                    disabled={!appointmentUrl}
+                    onClick={() => {
+                      if (appointmentUrl) window.open(appointmentUrl, '_blank', 'noopener,noreferrer');
+                    }}
                   >
                     <Calendar className="mr-2 h-5 w-5" />
-                    Prendre rendez-vous
+                    {appointmentUrl ? 'Prendre rendez-vous' : 'RDV en ligne indisponible'}
                   </Button>
 
                   <Button 
@@ -349,16 +543,16 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
               {!user && (
                 <Card className="bg-primary text-primary-foreground">
                   <CardContent className="pt-6">
-                    <h3 className="mb-2">Créez un compte</h3>
+                    <h3 className="mb-2">Partagez votre expérience</h3>
                     <p className="text-sm mb-4 opacity-90">
-                      Prenez rendez-vous, donnez votre avis et contribuez à la communauté.
+                      Connectez-vous pour publier un avis et contribuer à la communauté.
                     </p>
                     <Button 
                       variant="secondary" 
                       className="w-full"
-                      //onClick={() => onNavigate('signup')}
+                      onClick={() => window.location.href = loginRedirectUrl}
                     >
-                      S'inscrire gratuitement
+                      Se connecter
                     </Button>
                   </CardContent>
                 </Card>

@@ -59,7 +59,13 @@ export default function LoginPage() {
       setIsSubmitting(true);
       try {
         await login(formData.email, formData.password);
-        router.push("/dashboard");
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectTo = searchParams.get("redirect");
+        router.push(
+          redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
+            ? redirectTo
+            : "/dashboard"
+        );
       } catch (error) {
         setGeneralError(
           error instanceof Error
