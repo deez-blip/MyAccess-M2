@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from 'react';
+import { useEffect } from 'react';
 import { MapPin } from 'lucide-react';
 import { Center } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -14,34 +14,55 @@ interface MapViewProps {
   onSelectCenter: (center: Center) => void;
 }
 
-export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
+function getOfferLabel(center: Center) {
+  if (center.offerTypes?.includes('healthcare') || center.source === 'healthcare') {
+    return 'Lieu de soins';
+  }
+  return 'Lieu de soins';
+}
 
+function FitBounds({ centers }: { centers: Center[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (centers.length === 0) return;
+
+    const bounds = L.latLngBounds(
+      centers.map((center) => [center.latitude, center.longitude] as [number, number])
+    );
+    map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 });
+  }, [centers, map]);
+
+  return null;
+}
+
+export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProps) {
   // Simple map simulation using a grid layout
   // In production, this would use react-leaflet or similar
   
   const getScoreColor = (score: number) => {
     if (score >= 4.5) return 'bg-green-500';
-    if (score >= 3.5) return 'bg-yellow-500';
+    if (score >= 2.5) return 'bg-yellow-500';
     return 'bg-orange-500';
   };
 
   const getScoreBadgeVariant = (score: number): "default" | "secondary" | "destructive" | "outline" => {
     if (score >= 4.5) return 'default';
-    if (score >= 3.5) return 'secondary';
+    if (score >= 2.5) return 'secondary';
     return 'destructive';
   };
 
   return (
     <div className="h-full bg-muted/20 rounded-lg border relative overflow-hidden z-48">
       <MapContainer center={[48.8566, 2.3522]} zoom={12} className="h-full w-full">
+        <FitBounds centers={centers} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
         {/* Center Markers */}
-        {centers.map((center, index) => {
+        {centers.map((center) => {
 
           const iconHTML = new L.DivIcon({
             className: `w-8! h-8! rounded-full ${getScoreColor(center.globalScore)} 
@@ -65,6 +86,16 @@ export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProp
                     </Badge>
                     <span className="text-xs text-muted-foreground">{center.city}</span>
                   </div>
+                  <div className="flex gap-1 flex-wrap mb-2">
+                    <Badge variant="outline" className="text-xs">
+                      {getOfferLabel(center)}
+                    </Badge>
+                    {center.professions?.[0]?.label && (
+                      <Badge variant="secondary" className="text-xs">
+                        {center.professions[0].label}
+                      </Badge>
+                    )}
+                  </div>
                   <Link
                     href={`/center/${center.id}`}
                     className='w-full text-center'
@@ -80,7 +111,7 @@ export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProp
       <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 z-1000">
         <div className="flex items-center gap-2 text-sm mb-2">
           <MapPin className="h-4 w-4" />
-          <span>Paris et environs</span>
+          <span>Résultats affichés</span>
         </div>
         <div className="flex gap-2 text-xs">
           <div className="flex items-center gap-1">
@@ -89,7 +120,7 @@ export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProp
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span>Bon (3.5+)</span>
+            <span>Bon (2.5-4.4)</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-orange-500" />
@@ -118,9 +149,13 @@ export function MapView({ centers, selectedCenter, onSelectCenter }: MapViewProp
               Note globale: {selectedCenter.globalScore}/5
             </Badge>
             <Badge variant="outline">
-              {selectedCenter.type === 'both' ? 'Vaccination & Dépistage' : 
-               selectedCenter.type === 'vaccination' ? 'Vaccination' : 'Dépistage'}
+              {getOfferLabel(selectedCenter)}
             </Badge>
+            {selectedCenter.professions?.[0]?.label && (
+              <Badge variant="secondary">
+                {selectedCenter.professions[0].label}
+              </Badge>
+            )}
           </div>
         </div>
       )}

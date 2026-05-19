@@ -6,7 +6,17 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "analyze:accessibility-locations": "node scripts/analyzeAccessibilityLocations.js",
+    "export:accessibility-dataset": "node scripts/buildAccessibilityDataset.js",
+    "legacy:import:accessibility-dataset": "node scripts/importAccessibilityDataset.js",
+    "legacy:import:healthcare-establishments": "node scripts/importHealthcareEstablishments.js",
+    "rebuild:healthcare-places": "node scripts/rebuildHealthcarePlaces.js",
+    "recompute:healthcare-place-reviews": "node scripts/recomputeHealthcarePlaceReviewSignals.js",
+    "legacy:geocode:healthcare-locations": "node scripts/geocodeHealthcareLocations.js",
+    "legacy:enrich:healthcare-digital-access": "node scripts/enrichHealthcareDigitalAccess.js",
+    "test:digital-access": "node --test scripts/healthcareDigitalAccessParser.test.js",
+    "test:healthcare-establishments": "node --test scripts/importHealthcareEstablishments.test.js"
   },
   "author": "My access",
   "license": "ISC",

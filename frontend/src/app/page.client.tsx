@@ -15,11 +15,8 @@ export default function LandingPageClient() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const destination = user ? "/dashboard" : "/login";
-    const query = searchValue.trim()
-      ? `?q=${encodeURIComponent(searchValue.trim())}`
-      : "";
-    router.push(`${destination}${query}`);
+    const query = searchValue.trim() ? `?q=${encodeURIComponent(searchValue.trim())}` : "";
+    router.push(`/dashboard${query}`);
   };
 
   const tags = [

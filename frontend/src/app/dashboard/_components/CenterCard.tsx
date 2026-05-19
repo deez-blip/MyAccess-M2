@@ -1,25 +1,58 @@
 import { MapPin, Phone, Clock, Star } from 'lucide-react';
-import { Center } from '@/types';
+import { Center, LocationKind } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 
 interface CenterCardProps {
   center: Center;
   onViewDetails: (center: Center) => void;
 }
 
+const locationKindLabels: Record<LocationKind, string> = {
+  individual_or_small_practice: 'Cabinet individuel / petit',
+  probable_group_practice: 'Cabinet de groupe',
+  probable_specialist_group: 'Groupe spécialiste',
+  probable_health_center_or_shared_site: 'Centre / lieu partagé',
+};
+
+function getOfferLabel(center: Center) {
+  if (center.offerTypes?.includes('healthcare') || center.source === 'healthcare') {
+    return 'Lieu de soins';
+  }
+  return 'Lieu de soins';
+}
+
+function getDigitalAccessBadges(center: Center) {
+  const digitalAccess = center.digitalAccess;
+  if (!digitalAccess) return [];
+
+  return [
+    digitalAccess.hasDoctolib ? 'Doctolib' : null,
+    digitalAccess.hasOnlineBooking ? 'RDV en ligne' : null,
+    digitalAccess.hasTeleconsultation ? 'Télémédecine' : null,
+    digitalAccess.bookingMethods.some((method) => method === 'mail' || method === 'sms')
+      ? 'Mail/SMS'
+      : null,
+    digitalAccess.hasWebsite ? 'Site web' : null,
+  ].filter(Boolean) as string[];
+}
+
 export function CenterCard({ center, onViewDetails }: CenterCardProps) {
+  const mainProfession = center.professions?.[0]?.label;
+  const locationKindLabel = center.locationKind ? locationKindLabels[center.locationKind] : null;
+  const isHealthcareLocation = center.source === 'healthcare' || center.offerTypes?.includes('healthcare');
+  const digitalAccessBadges = getDigitalAccessBadges(center);
+
   const getScoreColor = (score: number) => {
     if (score >= 4.5) return 'text-green-600';
-    if (score >= 3.5) return 'text-yellow-600';
+    if (score >= 2.5) return 'text-yellow-600';
     return 'text-orange-600';
   };
 
   const getProgressColor = (score: number) => {
     if (score >= 4.5) return 'bg-green-500';
-    if (score >= 3.5) return 'bg-yellow-500';
+    if (score >= 2.5) return 'bg-yellow-500';
     return 'bg-orange-500';
   };
 
@@ -53,7 +86,9 @@ export function CenterCard({ center, onViewDetails }: CenterCardProps) {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Accessibilité numérique</span>
+            <span className="text-muted-foreground">
+              {isHealthcareLocation ? 'Disponibilité numérique' : 'Accessibilité numérique'}
+            </span>
             <span className="font-medium">{center.accessibilityScore.numerique}/5</span>
           </div>
           <div className="relative h-2 bg-muted rounded-full overflow-hidden">
@@ -64,7 +99,7 @@ export function CenterCard({ center, onViewDetails }: CenterCardProps) {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Qualité de l'accueil</span>
+            <span className="text-muted-foreground">Qualité de l&apos;accueil</span>
             <span className="font-medium">{center.accessibilityScore.accueil}/5</span>
           </div>
           <div className="relative h-2 bg-muted rounded-full overflow-hidden">
@@ -77,14 +112,28 @@ export function CenterCard({ center, onViewDetails }: CenterCardProps) {
 
         <div className="flex gap-2 flex-wrap mb-3">
           <Badge variant="outline">
-            {center.type === 'both' ? 'Vaccination & Dépistage' : 
-             center.type === 'vaccination' ? 'Vaccination' : 'Dépistage'}
+            {getOfferLabel(center)}
           </Badge>
+          {mainProfession && (
+            <Badge variant="secondary">
+              {mainProfession}
+            </Badge>
+          )}
+          {locationKindLabel && (
+            <Badge variant="outline">
+              {locationKindLabel}
+            </Badge>
+          )}
           {center.reviews.length > 0 && (
             <Badge variant="secondary">
               {center.reviews.length} avis
             </Badge>
           )}
+          {digitalAccessBadges.map((label) => (
+            <Badge key={label} variant="secondary">
+              {label}
+            </Badge>
+          ))}
         </div>
 
         <div className="space-y-1 text-sm text-muted-foreground mb-3">
