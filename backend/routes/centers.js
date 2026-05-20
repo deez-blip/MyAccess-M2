@@ -824,38 +824,93 @@ async function getHealthcareLocations(options) {
   return queryHealthcareLocations({ ...baseOptions, searchMode: "global" });
 }
 
-async function getHealthcareFacets() {
+function parseHealthcareQueryFilters(query) {
+  return {
+    search: query.search,
+    locationKind: query.locationKind || "all",
+    profession: query.profession || "all",
+    dataSource: parseEnumParam(query.dataSource, DATA_SOURCE_FILTERS),
+    digitalAccess: parseEnumParam(query.digitalAccess, DIGITAL_ACCESS_FILTERS),
+    handicapTypes: parseHandicapTypes(query.handicapTypes),
+    handicapMinScore: parseHandicapMinScore(query.handicapMinScore),
+  };
+}
+
+function buildFacetCondition(filters, excludedFacet) {
+  const searchCondition = buildSearchIndexSearchCondition(filters.search, "global");
+  const filterCondition = buildSearchIndexWhereCondition({
+    locationKind: excludedFacet === "locationKind" ? "all" : filters.locationKind,
+    profession: excludedFacet === "profession" ? "all" : filters.profession,
+    dataSource: excludedFacet === "dataSource" ? "all" : filters.dataSource,
+    digitalAccess: excludedFacet === "digitalAccess" ? "all" : filters.digitalAccess,
+  });
+  const handicapCondition = buildSearchIndexHandicapCondition({
+    handicapTypes: filters.handicapTypes || [],
+    handicapMinScore: filters.handicapMinScore ?? HANDICAP_MIN_SCORE_DEFAULT,
+  });
+
+  return sql`${searchCondition} ${filterCondition} ${handicapCondition}`;
+}
+
+async function getHealthcareFacets(filters = {}) {
+  const dataSourceCondition = buildFacetCondition(filters, "dataSource");
+  const digitalAccessCondition = buildFacetCondition(filters, "digitalAccess");
+  const locationKindCondition = buildFacetCondition(filters, "locationKind");
+  const professionCondition = buildFacetCondition(filters, "profession");
+
   const [sourceCounts] = await sql`
     SELECT
       COUNT(*)::int AS total,
       COUNT(*) FILTER (WHERE practitioner_count > 0)::int AS practitioners,
       COUNT(*) FILTER (WHERE establishment_count > 0)::int AS establishments,
       COUNT(*) FILTER (WHERE practitioner_count > 0 AND establishment_count > 0)::int AS mixed
-    FROM healthcare_places
+    FROM healthcare_places si
+    WHERE TRUE
+      ${dataSourceCondition}
   `;
   const [digitalCounts] = await sql`
     SELECT
+      COUNT(*)::int AS total,
       COUNT(*) FILTER (WHERE has_online_booking)::int AS online_booking,
       COUNT(*) FILTER (WHERE has_website)::int AS website,
       COUNT(*) FILTER (WHERE has_doctolib)::int AS doctolib
-    FROM healthcare_places
+    FROM healthcare_places si
+    WHERE TRUE
+      ${digitalAccessCondition}
   `;
   const locationKinds = await sql`
-    SELECT location_kind AS value, COUNT(*)::int AS count
-    FROM healthcare_places
-    WHERE location_kind IS NOT NULL
+    SELECT si.location_kind AS value, COUNT(*)::int AS count
+    FROM healthcare_places si
+    WHERE TRUE
+      ${locationKindCondition}
+      AND si.location_kind IS NOT NULL
     GROUP BY location_kind
     ORDER BY count DESC, value ASC
+  `;
+  const [locationKindTotal] = await sql`
+    SELECT COUNT(*)::int AS total
+    FROM healthcare_places si
+    WHERE TRUE
+      ${locationKindCondition}
   `;
   const professions = await sql`
     SELECT label AS value, COUNT(*)::int AS count
     FROM healthcare_places si
     CROSS JOIN LATERAL UNNEST(si.profession_labels) AS label
-    WHERE label IS NOT NULL AND label <> ''
+    WHERE TRUE
+      ${professionCondition}
+      AND label IS NOT NULL
+      AND label <> ''
     GROUP BY label
     HAVING COUNT(*) >= 2
     ORDER BY count DESC, label ASC
     LIMIT 60
+  `;
+  const [professionTotal] = await sql`
+    SELECT COUNT(*)::int AS total
+    FROM healthcare_places si
+    WHERE TRUE
+      ${professionCondition}
   `;
 
   return {
@@ -866,17 +921,17 @@ async function getHealthcareFacets() {
       { value: "mixed", count: sourceCounts.mixed },
     ],
     digitalAccess: [
-      { value: "all", count: sourceCounts.total },
+      { value: "all", count: digitalCounts.total },
       { value: "online_booking", count: digitalCounts.online_booking },
       { value: "website", count: digitalCounts.website },
       { value: "doctolib", count: digitalCounts.doctolib },
     ],
     locationKinds: [
-      { value: "all", count: sourceCounts.total },
+      { value: "all", count: locationKindTotal.total },
       ...locationKinds,
     ],
     professions: [
-      { value: "all", count: sourceCounts.total },
+      { value: "all", count: professionTotal.total },
       ...professions,
     ],
   };
@@ -926,7 +981,7 @@ router.get("/", async (req, res) => {
 
 router.get("/facets", async (req, res) => {
   try {
-    res.json(await getHealthcareFacets());
+    res.json(await getHealthcareFacets(parseHealthcareQueryFilters(req.query)));
   } catch (error) {
     console.error("Erreur lors de la récupération des filtres:", error);
     res.status(500).json({ error: "Erreur lors de la récupération des filtres" });
