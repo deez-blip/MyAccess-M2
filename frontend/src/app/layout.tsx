@@ -40,7 +40,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
       </head>
-      <body className={`${jakarta.variable} font-sans`}>
+      <body className={`${jakarta.variable} font-sans`} suppressHydrationWarning>
         <AccessibilityProvider>
           <AuthProvider>
             <Header />

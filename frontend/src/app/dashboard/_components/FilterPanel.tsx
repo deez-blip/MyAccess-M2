@@ -40,7 +40,7 @@ const handicapTypes: { value: HandicapType; label: string; icon: string }[] = [
 ];
 
 const dataSourceLabels: Record<DashboardDataSource, string> = {
-  all: 'Tous lieux',
+  all: 'Toutes sources',
   practitioners: 'Praticiens Santé.fr',
   establishments: 'AccessLibre',
   mixed: 'Lieux mixtes',
@@ -53,13 +53,21 @@ const digitalAccessLabels: Record<DashboardDigitalAccess, string> = {
   doctolib: 'Doctolib',
 };
 
-const locationKindLabels: Record<DashboardLocationKind, string> = {
+const locationKindLabels: Partial<Record<DashboardLocationKind, string>> = {
   all: 'Tous types',
   individual_or_small_practice: 'Cabinet individuel / petit',
   probable_group_practice: 'Cabinet de groupe',
   probable_specialist_group: 'Groupe spécialiste',
   probable_health_center_or_shared_site: 'Centre / lieu partagé',
 };
+
+function getLocationKindLabel(value: DashboardLocationKind) {
+  if (value.startsWith('place_category:')) {
+    return value.replace('place_category:', '');
+  }
+
+  return locationKindLabels[value] || value;
+}
 
 function formatCount(count: number) {
   return new Intl.NumberFormat('fr-FR').format(count);
@@ -137,7 +145,7 @@ export function FilterPanel({
             <SelectContent>
               {locationKindOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {optionLabel(locationKindLabels[option.value], option.count)}
+                  {optionLabel(getLocationKindLabel(option.value), option.count)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -145,11 +153,11 @@ export function FilterPanel({
         </div>
 
         <div>
-          <Label className="mb-3 block">Profession ou activité</Label>
+          <Label className="mb-3 block">Profession / spécialité</Label>
           <Select
             value={profession}
             onValueChange={(value: string) => onProfessionChange(value)}
-            aria-label="Sélectionner une profession ou une activité"
+            aria-label="Sélectionner une profession ou une spécialité"
           >
             <SelectTrigger>
               <SelectValue />
@@ -158,7 +166,7 @@ export function FilterPanel({
               {professionOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.value === 'all'
-                    ? optionLabel('Toutes activités', option.count)
+                    ? optionLabel('Toutes professions', option.count)
                     : optionLabel(option.value, option.count)}
                 </SelectItem>
               ))}

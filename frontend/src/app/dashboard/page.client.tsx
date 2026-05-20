@@ -26,7 +26,7 @@ const MapView = dynamic(() => import('./_components/MapView').then((mod) => mod.
 });
 
 const DASHBOARD_CACHE_NAMESPACE = 'myaccess.dashboard.centers.';
-const DASHBOARD_CACHE_BASE_KEY = `${DASHBOARD_CACHE_NAMESPACE}v4`;
+const DASHBOARD_CACHE_BASE_KEY = `${DASHBOARD_CACHE_NAMESPACE}v5`;
 const DEFAULT_DATA_SOURCE: DashboardDataSource = 'all';
 const DEFAULT_DIGITAL_ACCESS: DashboardDigitalAccess = 'all';
 const DEFAULT_LOCATION_KIND: DashboardLocationKind = 'all';
@@ -50,34 +50,32 @@ interface DashboardRequestParams {
 }
 
 const FALLBACK_DATA_SOURCE_OPTIONS: FilterFacetOption<DashboardDataSource>[] = [
-  { value: 'all', count: 0 },
-  { value: 'practitioners', count: 0 },
-  { value: 'establishments', count: 0 },
-  { value: 'mixed', count: 0 },
+  { value: 'all' },
+  { value: 'practitioners' },
+  { value: 'establishments' },
+  { value: 'mixed' },
 ];
 
 const FALLBACK_DIGITAL_ACCESS_OPTIONS: FilterFacetOption<DashboardDigitalAccess>[] = [
-  { value: 'all', count: 0 },
-  { value: 'online_booking', count: 0 },
-  { value: 'website', count: 0 },
-  { value: 'doctolib', count: 0 },
+  { value: 'all' },
+  { value: 'online_booking' },
+  { value: 'website' },
+  { value: 'doctolib' },
 ];
 
 const FALLBACK_LOCATION_KIND_OPTIONS: FilterFacetOption<DashboardLocationKind>[] = [
-  { value: 'all', count: 0 },
-  { value: 'individual_or_small_practice', count: 0 },
-  { value: 'probable_group_practice', count: 0 },
-  { value: 'probable_specialist_group', count: 0 },
-  { value: 'probable_health_center_or_shared_site', count: 0 },
+  { value: 'all' },
+  { value: 'individual_or_small_practice' },
+  { value: 'probable_group_practice' },
+  { value: 'probable_specialist_group' },
+  { value: 'probable_health_center_or_shared_site' },
 ];
 
 const FALLBACK_PROFESSION_OPTIONS: FilterFacetOption<string>[] = [
-  { value: 'all', count: 0 },
-  { value: 'Laboratoire d\'analyse médicale', count: 0 },
-  { value: 'Hôpital', count: 0 },
-  { value: 'Médecin généraliste', count: 0 },
-  { value: 'Infirmier', count: 0 },
-  { value: 'Centre médical', count: 0 },
+  { value: 'all' },
+  { value: 'Médecin généraliste' },
+  { value: 'Infirmier' },
+  { value: 'Masseur-Kinésithérapeute' },
 ];
 
 function parseUserHandicaps(user: User | null): HandicapType[] {
@@ -254,8 +252,12 @@ function centerPassesClientFilters({
     return false;
   }
 
-  if (locationKind !== 'all' && center.locationKind !== locationKind) {
-    return false;
+  if (locationKind !== 'all') {
+    if (locationKind.startsWith('place_category:')) {
+      return true;
+    } else if (center.locationKind !== locationKind) {
+      return false;
+    }
   }
 
   if (
@@ -320,7 +322,9 @@ function mergeFacetOptions<T extends string>(
     optionsByValue.set(option.value, option);
   }
 
-  return [...optionsByValue.values()].filter((option) => option.value === 'all' || option.count > 0);
+  return [...optionsByValue.values()].filter(
+    (option) => option.value === 'all' || Number(option.count || 0) > 0
+  );
 }
 
 interface DashboardProps {

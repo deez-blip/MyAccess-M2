@@ -29,7 +29,9 @@ export type LocationKind =
   | 'probable_specialist_group'
   | 'probable_health_center_or_shared_site';
 
-export type DashboardLocationKind = 'all' | LocationKind;
+export type PlaceCategoryFilter = `place_category:${string}`;
+
+export type DashboardLocationKind = 'all' | LocationKind | PlaceCategoryFilter;
 
 export interface CenterProfession {
   label: string;
@@ -38,7 +40,7 @@ export interface CenterProfession {
 
 export interface FilterFacetOption<T extends string = string> {
   value: T;
-  count: number;
+  count?: number;
 }
 
 export interface CenterFilterFacets {
