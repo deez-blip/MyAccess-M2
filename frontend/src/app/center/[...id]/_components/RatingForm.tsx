@@ -1,5 +1,11 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  MessageSquareText,
+  Plus,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import {
   AccessibilityCriterion,
   Center,
@@ -13,7 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { centersApi } from '@/lib/api';
+import { cn } from '@/components/ui/utils';
 
 interface RatingFormProps {
   center: Center;
@@ -41,6 +49,10 @@ const handicapTypes: { value: HandicapType; label: string }[] = [
 
 const allowedHandicapTypes = new Set<HandicapType>(
   handicapTypes.map((type) => type.value)
+);
+
+const handicapLabels = new Map<HandicapType, string>(
+  handicapTypes.map((type) => [type.value, type.label])
 );
 
 function getUserHandicapTypes(user: User): HandicapType[] {
@@ -78,6 +90,77 @@ function customItemFromReviewItem(
     handicapTypes: item.handicapTypes,
     comment: item.comment || '',
   };
+}
+
+function CriterionBadges({ handicapTypes }: { handicapTypes: HandicapType[] }) {
+  if (!handicapTypes.length) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {handicapTypes.map((type) => (
+        <Badge key={type} variant="outline" className="bg-background text-[11px]">
+          {handicapLabels.get(type) || type}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function CriterionToggleCard({
+  criterion,
+  checked,
+  onToggle,
+  mode,
+}: {
+  criterion: AccessibilityCriterion;
+  checked: boolean;
+  onToggle: () => void;
+  mode: 'reportAbsent' | 'reportPresent';
+}) {
+  const isCorrection = mode === 'reportAbsent';
+  const Icon = checked ? (isCorrection ? XCircle : CheckCircle2) : CheckCircle2;
+  const statusText = checked
+    ? isCorrection
+      ? 'À corriger : absent'
+      : 'Ajouté comme présent'
+    : isCorrection
+      ? 'Confirmé présent'
+      : 'Non observé';
+
+  return (
+    <label
+      className={cn(
+        'flex min-h-[104px] cursor-pointer items-start gap-3 rounded-md border bg-background p-3 text-sm transition-colors',
+        checked && isCorrection && 'border-amber-300 bg-amber-50',
+        checked && !isCorrection && 'border-emerald-300 bg-emerald-50'
+      )}
+    >
+      <Checkbox
+        className="mt-0.5"
+        checked={checked}
+        onCheckedChange={onToggle}
+        aria-label={statusText}
+      />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex items-start gap-2">
+          <Icon
+            className={cn(
+              'mt-0.5 h-4 w-4 shrink-0',
+              checked && isCorrection && 'text-amber-700',
+              checked && !isCorrection && 'text-emerald-700',
+              !checked && 'text-muted-foreground'
+            )}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <span className="block font-medium leading-snug">{criterion.label}</span>
+            <span className="text-xs text-muted-foreground">{statusText}</span>
+          </div>
+        </div>
+        <CriterionBadges handicapTypes={criterion.handicapTypes} />
+      </div>
+    </label>
+  );
 }
 
 export function RatingForm({ center, user, token, review, onSubmit, onCancel }: RatingFormProps) {
@@ -230,7 +313,21 @@ export function RatingForm({ center, user, token, review, onSubmit, onCancel }: 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border bg-muted/30 p-4">
+    <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border bg-muted/20 p-4 sm:p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">
+            {review ? 'Modifier mon avis' : 'Ajouter un avis'}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Votre retour met à jour les informations d&apos;accessibilité du lieu.
+          </p>
+        </div>
+        <Badge variant="outline" className="bg-background">
+          {center.name}
+        </Badge>
+      </div>
+
       {error && (
         <div
           className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
@@ -241,96 +338,95 @@ export function RatingForm({ center, user, token, review, onSubmit, onCancel }: 
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="comment">Commentaire</Label>
+      <section className="space-y-3 rounded-md border-2 border-primary/20 bg-white p-4 shadow-sm">
+        <div className="space-y-1">
+          <Label htmlFor="comment" className="flex items-center gap-2 text-base font-semibold">
+            <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+            Commentaire
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Décrivez rapidement ce que vous avez constaté sur place.
+          </p>
+        </div>
         <Textarea
           id="comment"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Décrivez ce que vous avez constaté sur place."
+          placeholder="Ex. accueil clair, entrée accessible, signalétique difficile à lire..."
           rows={4}
           required
+          className="min-h-[140px] border-2 border-primary/25 bg-white text-base shadow-inner focus-visible:border-primary focus-visible:ring-primary/20"
         />
-      </div>
+      </section>
 
       {presentCriteria.length > 0 && (
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-base font-medium">Éléments indiqués présents</h3>
-            <p className="text-sm text-muted-foreground">
-              Cochez ceux qui étaient absents lors de votre visite.
-            </p>
+        <section className="space-y-3 rounded-md border bg-background/60 p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-medium">Corriger les éléments annoncés</h3>
+              <p className="text-sm text-muted-foreground">
+                Sélectionnez uniquement les aides annoncées que vous n&apos;avez pas retrouvées.
+              </p>
+            </div>
+            <Badge variant="outline">{presentCriteria.length}</Badge>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {presentCriteria.map((criterion) => (
-              <label
+              <CriterionToggleCard
                 key={criterion.key}
-                className="flex items-start gap-3 rounded-md border bg-background p-3 text-sm"
-              >
-                <Checkbox
-                  checked={reportedAbsentKeys.includes(criterion.key)}
-                  onCheckedChange={() =>
-                    toggleKey(
-                      criterion.key,
-                      reportedAbsentKeys,
-                      setReportedAbsentKeys
-                    )
-                  }
-                />
-                <span>
-                  <span className="block font-medium">{criterion.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Absent finalement
-                  </span>
-                </span>
-              </label>
+                criterion={criterion}
+                checked={reportedAbsentKeys.includes(criterion.key)}
+                mode="reportAbsent"
+                onToggle={() =>
+                  toggleKey(
+                    criterion.key,
+                    reportedAbsentKeys,
+                    setReportedAbsentKeys
+                  )
+                }
+              />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {absentCriteria.length > 0 && (
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-base font-medium">Critères non signalés</h3>
-            <p className="text-sm text-muted-foreground">
-              Cochez ceux qui étaient pourtant présents.
-            </p>
+        <section className="space-y-3 rounded-md border bg-background/60 p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-medium">Compléter les aides présentes</h3>
+              <p className="text-sm text-muted-foreground">
+                Ajoutez les critères standards présents sur place mais absents de la fiche.
+              </p>
+            </div>
+            <Badge variant="outline">{absentCriteria.length}</Badge>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             {absentCriteria.map((criterion) => (
-              <label
+              <CriterionToggleCard
                 key={criterion.key}
-                className="flex items-start gap-3 rounded-md border bg-background p-3 text-sm"
-              >
-                <Checkbox
-                  checked={reportedPresentKeys.includes(criterion.key)}
-                  onCheckedChange={() =>
-                    toggleKey(
-                      criterion.key,
-                      reportedPresentKeys,
-                      setReportedPresentKeys
-                    )
-                  }
-                />
-                <span>
-                  <span className="block font-medium">{criterion.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Présent sur place
-                  </span>
-                </span>
-              </label>
+                criterion={criterion}
+                checked={reportedPresentKeys.includes(criterion.key)}
+                mode="reportPresent"
+                onToggle={() =>
+                  toggleKey(
+                    criterion.key,
+                    reportedPresentKeys,
+                    setReportedPresentKeys
+                  )
+                }
+              />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="space-y-3">
+      <section className="space-y-3 rounded-md border bg-background/60 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-medium">Aide ajoutée</h3>
+            <h3 className="text-base font-medium">Ajouter une aide spécifique</h3>
             <p className="text-sm text-muted-foreground">
-              Ajoutez un élément utile qui n&apos;est pas dans les critères.
+              Pour les éléments utiles qui ne sont pas dans les critères standards.
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={addCustomItem}>
@@ -339,18 +435,24 @@ export function RatingForm({ center, user, token, review, onSubmit, onCancel }: 
           </Button>
         </div>
 
-        {customItems.length > 0 && (
+        {customItems.length > 0 ? (
           <div className="space-y-3">
-            {customItems.map((item) => (
-              <div key={item.id} className="space-y-3 rounded-md border bg-background p-3">
-                <div className="flex gap-2">
-                  <Input
-                    value={item.label}
-                    onChange={(e) =>
-                      updateCustomItem(item.id, { label: e.target.value })
-                    }
-                    placeholder="Ex. boucle magnétique, salle calme, rampe mobile"
-                  />
+            {customItems.map((item, index) => (
+              <div key={item.id} className="space-y-4 rounded-md border bg-background p-3">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Label htmlFor={`custom-item-${item.id}`} className="text-sm font-medium">
+                      Aide #{index + 1}
+                    </Label>
+                    <Input
+                      id={`custom-item-${item.id}`}
+                      value={item.label}
+                      onChange={(e) =>
+                        updateCustomItem(item.id, { label: e.target.value })
+                      }
+                      placeholder="Ex. boucle magnétique, salle calme, rampe mobile"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -362,33 +464,56 @@ export function RatingForm({ center, user, token, review, onSubmit, onCancel }: 
                   </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {handicapTypes.map((type) => (
-                    <label key={type.value} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={item.handicapTypes.includes(type.value)}
-                        onCheckedChange={() => toggleCustomHandicap(item, type.value)}
-                      />
-                      {type.label}
-                    </label>
-                  ))}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Handicap concerné</p>
+                  <div className="flex flex-wrap gap-2">
+                    {handicapTypes.map((type) => {
+                      const checked = item.handicapTypes.includes(type.value);
+
+                      return (
+                        <label
+                          key={type.value}
+                          className={cn(
+                            'flex cursor-pointer items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm transition-colors',
+                            checked && 'border-primary bg-primary/5 text-primary'
+                          )}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleCustomHandicap(item, type.value)}
+                          />
+                          {type.label}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <Textarea
-                  value={item.comment}
-                  onChange={(e) =>
-                    updateCustomItem(item.id, { comment: e.target.value })
-                  }
-                  placeholder="Précision optionnelle"
-                  rows={2}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor={`custom-comment-${item.id}`} className="text-sm font-medium">
+                    Précision optionnelle
+                  </Label>
+                  <Textarea
+                    id={`custom-comment-${item.id}`}
+                    value={item.comment}
+                    onChange={(e) =>
+                      updateCustomItem(item.id, { comment: e.target.value })
+                    }
+                    placeholder="Ex. disponible à l'accueil sur demande"
+                    rows={2}
+                  />
+                </div>
               </div>
             ))}
           </div>
+        ) : (
+          <div className="rounded-md border border-dashed bg-background p-4 text-sm text-muted-foreground">
+            Aucune aide spécifique ajoutée.
+          </div>
         )}
-      </div>
+      </section>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>
           Annuler
         </Button>
