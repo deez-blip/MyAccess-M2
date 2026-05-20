@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, List, Map as MapIcon, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, List, Map as MapIcon, RefreshCw } from "lucide-react";
 import {
   Center,
   CenterFilterFacets,
@@ -11,26 +11,29 @@ import {
   FilterFacetOption,
   HandicapType,
   User,
-} from '@/types';
-import { centersApi } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FilterPanel } from './_components/FilterPanel';
-import { CenterCard } from './_components/CenterCard';
-import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
+} from "@/types";
+import { centersApi } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FilterPanel } from "./_components/FilterPanel";
+import { CenterCard } from "./_components/CenterCard";
+import dynamic from "next/dynamic";
+import { useSearchParams, useRouter } from "next/navigation";
 
-const MapView = dynamic(() => import('./_components/MapView').then((mod) => mod.MapView), { 
-  ssr: false,
-});
+const MapView = dynamic(
+  () => import("./_components/MapView").then((mod) => mod.MapView),
+  {
+    ssr: false,
+  },
+);
 
-const DASHBOARD_CACHE_NAMESPACE = 'myaccess.dashboard.centers.';
+const DASHBOARD_CACHE_NAMESPACE = "myaccess.dashboard.centers.";
 const DASHBOARD_CACHE_BASE_KEY = `${DASHBOARD_CACHE_NAMESPACE}v5`;
-const DEFAULT_DATA_SOURCE: DashboardDataSource = 'all';
-const DEFAULT_DIGITAL_ACCESS: DashboardDigitalAccess = 'all';
-const DEFAULT_LOCATION_KIND: DashboardLocationKind = 'all';
-const DEFAULT_PROFESSION = 'all';
+const DEFAULT_DATA_SOURCE: DashboardDataSource = "all";
+const DEFAULT_DIGITAL_ACCESS: DashboardDigitalAccess = "all";
+const DEFAULT_LOCATION_KIND: DashboardLocationKind = "all";
+const DEFAULT_PROFESSION = "all";
 const HANDICAP_MIN_SCORE = 2.5;
 const INITIAL_RESULTS_LIMIT = 200;
 const BACKGROUND_RESULTS_LIMIT = 300;
@@ -50,41 +53,46 @@ interface DashboardRequestParams {
 }
 
 const FALLBACK_DATA_SOURCE_OPTIONS: FilterFacetOption<DashboardDataSource>[] = [
-  { value: 'all' },
-  { value: 'practitioners' },
-  { value: 'establishments' },
-  { value: 'mixed' },
+  { value: "all" },
+  { value: "practitioners" },
+  { value: "establishments" },
+  { value: "mixed" },
 ];
 
-const FALLBACK_DIGITAL_ACCESS_OPTIONS: FilterFacetOption<DashboardDigitalAccess>[] = [
-  { value: 'all' },
-  { value: 'online_booking' },
-  { value: 'website' },
-  { value: 'doctolib' },
-];
+const FALLBACK_DIGITAL_ACCESS_OPTIONS: FilterFacetOption<DashboardDigitalAccess>[] =
+  [
+    { value: "all" },
+    { value: "online_booking" },
+    { value: "website" },
+    { value: "doctolib" },
+  ];
 
-const FALLBACK_LOCATION_KIND_OPTIONS: FilterFacetOption<DashboardLocationKind>[] = [
-  { value: 'all' },
-  { value: 'individual_or_small_practice' },
-  { value: 'probable_group_practice' },
-  { value: 'probable_specialist_group' },
-  { value: 'probable_health_center_or_shared_site' },
-];
+const FALLBACK_LOCATION_KIND_OPTIONS: FilterFacetOption<DashboardLocationKind>[] =
+  [
+    { value: "all" },
+    { value: "individual_or_small_practice" },
+    { value: "probable_group_practice" },
+    { value: "probable_specialist_group" },
+    { value: "probable_health_center_or_shared_site" },
+  ];
 
 const FALLBACK_PROFESSION_OPTIONS: FilterFacetOption<string>[] = [
-  { value: 'all' },
-  { value: 'Médecin généraliste' },
-  { value: 'Infirmier' },
-  { value: 'Masseur-Kinésithérapeute' },
+  { value: "all" },
+  { value: "Médecin généraliste" },
+  { value: "Infirmier" },
+  { value: "Masseur-Kinésithérapeute" },
 ];
 
 function parseUserHandicaps(user: User | null): HandicapType[] {
   const allowedHandicapTypes = new Set<HandicapType>([
-    'sensoriel',
-    'moteur',
-    'mental',
-    'psychique',
-    'cognitif',
+    "wheelchair",
+    "walking_difficulty",
+    "vision",
+    "hearing",
+    "intellectual",
+    "psychological",
+    "autism",
+    "obesity",
   ]);
 
   return (
@@ -96,7 +104,7 @@ function parseUserHandicaps(user: User | null): HandicapType[] {
 }
 
 function normalizeSearchQuery(query: string) {
-  return query.trim().replace(/\s+/g, ' ').toLocaleLowerCase('fr-FR');
+  return query.trim().replace(/\s+/g, " ").toLocaleLowerCase("fr-FR");
 }
 
 function buildRequestParams({
@@ -106,6 +114,7 @@ function buildRequestParams({
   locationKind,
   profession,
   selectedHandicaps,
+  minScore,
 }: {
   searchQuery: string;
   dataSource: DashboardDataSource;
@@ -113,8 +122,10 @@ function buildRequestParams({
   locationKind: DashboardLocationKind;
   profession: string;
   selectedHandicaps: HandicapType[];
+  minScore: number;
 }): DashboardRequestParams {
   const search = normalizeSearchQuery(searchQuery);
+  console.log("selectedHandicaps in buildRequestParams:", selectedHandicaps);
   return {
     search,
     dataSource,
@@ -122,26 +133,26 @@ function buildRequestParams({
     locationKind,
     profession,
     handicapTypes: [...selectedHandicaps].sort(),
-    handicapMinScore: selectedHandicaps.length > 0 ? HANDICAP_MIN_SCORE : undefined,
+    handicapMinScore: selectedHandicaps.length > 0 ? minScore : undefined,
   };
 }
 
 function buildCacheKey(params: DashboardRequestParams) {
   const cacheParams = new URLSearchParams();
-  cacheParams.set('search', params.search || 'initial');
-  cacheParams.set('dataSource', params.dataSource);
-  cacheParams.set('digitalAccess', params.digitalAccess);
-  cacheParams.set('locationKind', params.locationKind);
-  cacheParams.set('profession', params.profession);
-  cacheParams.set('handicapTypes', params.handicapTypes.join(','));
+  cacheParams.set("search", params.search || "initial");
+  cacheParams.set("dataSource", params.dataSource);
+  cacheParams.set("digitalAccess", params.digitalAccess);
+  cacheParams.set("locationKind", params.locationKind);
+  cacheParams.set("profession", params.profession);
+  cacheParams.set("handicapTypes", params.handicapTypes.join(","));
   if (params.handicapMinScore !== undefined) {
-    cacheParams.set('handicapMinScore', params.handicapMinScore.toString());
+    cacheParams.set("handicapMinScore", params.handicapMinScore.toString());
   }
   return `${DASHBOARD_CACHE_BASE_KEY}:${cacheParams.toString()}`;
 }
 
 function readCachedCenters(cacheKey: string): Center[] | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   const rawValue = window.sessionStorage.getItem(cacheKey);
   if (!rawValue) return null;
@@ -156,7 +167,7 @@ function readCachedCenters(cacheKey: string): Center[] | null {
 }
 
 function clearDashboardCache(exceptKey?: string) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     for (let index = window.sessionStorage.length - 1; index >= 0; index -= 1) {
@@ -166,22 +177,22 @@ function clearDashboardCache(exceptKey?: string) {
       }
     }
   } catch (error) {
-    console.warn('Impossible de nettoyer le cache dashboard:', error);
+    console.warn("Impossible de nettoyer le cache dashboard:", error);
   }
 }
 
 function isStorageQuotaError(error: unknown) {
   return (
     error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' ||
-      error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    (error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
       error.code === 22 ||
       error.code === 1014)
   );
 }
 
 function writeCachedCenters(cacheKey: string, data: Center[]) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   const cachePayload = JSON.stringify({
     cachedAt: new Date().toISOString(),
@@ -192,7 +203,7 @@ function writeCachedCenters(cacheKey: string, data: Center[]) {
     window.sessionStorage.setItem(cacheKey, cachePayload);
   } catch (error) {
     if (!isStorageQuotaError(error)) {
-      console.warn('Impossible de sauvegarder le cache dashboard:', error);
+      console.warn("Impossible de sauvegarder le cache dashboard:", error);
       return;
     }
 
@@ -201,7 +212,7 @@ function writeCachedCenters(cacheKey: string, data: Center[]) {
     try {
       window.sessionStorage.setItem(cacheKey, cachePayload);
     } catch (retryError) {
-      console.warn('Cache dashboard ignoré faute de place:', retryError);
+      console.warn("Cache dashboard ignoré faute de place:", retryError);
     }
   }
 }
@@ -225,35 +236,45 @@ function centerPassesClientFilters({
 }) {
   if (center.globalScore < minScore) return false;
 
-  if (dataSource === 'practitioners' && !center.services.includes('Source Santé.fr')) {
-    return false;
-  }
-
-  if (dataSource === 'establishments' && !center.services.includes('Source AccessLibre')) {
-    return false;
-  }
-
   if (
-    dataSource === 'mixed' &&
-    (!center.services.includes('Source Santé.fr') || !center.services.includes('Source AccessLibre'))
+    dataSource === "practitioners" &&
+    !center.services.includes("Source Santé.fr")
   ) {
     return false;
   }
 
-  if (digitalAccess === 'online_booking' && !center.digitalAccess?.hasOnlineBooking) {
+  if (
+    dataSource === "establishments" &&
+    !center.services.includes("Source AccessLibre")
+  ) {
     return false;
   }
 
-  if (digitalAccess === 'website' && !center.digitalAccess?.hasWebsite) {
+  if (
+    dataSource === "mixed" &&
+    (!center.services.includes("Source Santé.fr") ||
+      !center.services.includes("Source AccessLibre"))
+  ) {
     return false;
   }
 
-  if (digitalAccess === 'doctolib' && !center.digitalAccess?.hasDoctolib) {
+  if (
+    digitalAccess === "online_booking" &&
+    !center.digitalAccess?.hasOnlineBooking
+  ) {
     return false;
   }
 
-  if (locationKind !== 'all') {
-    if (locationKind.startsWith('place_category:')) {
+  if (digitalAccess === "website" && !center.digitalAccess?.hasWebsite) {
+    return false;
+  }
+
+  if (digitalAccess === "doctolib" && !center.digitalAccess?.hasDoctolib) {
+    return false;
+  }
+
+  if (locationKind !== "all") {
+    if (locationKind.startsWith("place_category:")) {
       return true;
     } else if (center.locationKind !== locationKind) {
       return false;
@@ -261,15 +282,25 @@ function centerPassesClientFilters({
   }
 
   if (
-    profession !== 'all' &&
-    !center.professions?.some((centerProfession) => centerProfession.label === profession)
+    profession !== "all" &&
+    !center.professions?.some(
+      (centerProfession) => centerProfession.label === profession,
+    )
   ) {
     return false;
   }
 
   if (selectedHandicaps.length > 0) {
     return selectedHandicaps.every((handicap) => {
-      return (center.accessibilityHandicapScores?.[handicap] || 0) >= HANDICAP_MIN_SCORE;
+      // Map frontend generic types to backend profile keys when needed
+      const profileKeys =
+        handicap === "vision" ? ["low_vision", "blind"] : [handicap];
+
+      return profileKeys.some(
+        (key) =>
+          (center.accessibilityProfiles?.[key]?.score || 0) >=
+          HANDICAP_MIN_SCORE,
+      );
     });
   }
 
@@ -298,10 +329,12 @@ function sortCentersForMap(centers: Center[]) {
     const digitalDelta =
       (b.digitalAccess?.hasWebsite ? 1 : 0) +
       (b.digitalAccess?.hasOnlineBooking ? 1 : 0) -
-      ((a.digitalAccess?.hasWebsite ? 1 : 0) + (a.digitalAccess?.hasOnlineBooking ? 1 : 0));
+      ((a.digitalAccess?.hasWebsite ? 1 : 0) +
+        (a.digitalAccess?.hasOnlineBooking ? 1 : 0));
     if (digitalDelta !== 0) return digitalDelta;
 
-    const professionDelta = (b.professions?.[0]?.count || 0) - (a.professions?.[0]?.count || 0);
+    const professionDelta =
+      (b.professions?.[0]?.count || 0) - (a.professions?.[0]?.count || 0);
     if (professionDelta !== 0) return professionDelta;
 
     return a.name.localeCompare(b.name);
@@ -310,7 +343,7 @@ function sortCentersForMap(centers: Center[]) {
 
 function mergeFacetOptions<T extends string>(
   fallbackOptions: FilterFacetOption<T>[],
-  remoteOptions?: FilterFacetOption<T>[]
+  remoteOptions?: FilterFacetOption<T>[],
 ) {
   const optionsByValue = new Map<T, FilterFacetOption<T>>();
 
@@ -323,7 +356,7 @@ function mergeFacetOptions<T extends string>(
   }
 
   return [...optionsByValue.values()].filter(
-    (option) => option.value === 'all' || Number(option.count || 0) > 0
+    (option) => option.value === "all" || Number(option.count || 0) > 0,
   );
 }
 
@@ -335,26 +368,32 @@ interface DashboardProps {
 export default function DashboardClient({ user }: DashboardProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialSearchQuery = searchParams.get("q") ?? '';
+  const initialSearchQuery = searchParams.get("q") ?? "";
   const initialHandicaps = parseUserHandicaps(user);
 
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-  const [selectedHandicaps, setSelectedHandicaps] = useState<HandicapType[]>(initialHandicaps);
+  const [selectedHandicaps, setSelectedHandicaps] =
+    useState<HandicapType[]>(initialHandicaps);
   const [minScore, setMinScore] = useState(0);
-  const [dataSource, setDataSource] = useState<DashboardDataSource>(DEFAULT_DATA_SOURCE);
-  const [digitalAccess, setDigitalAccess] = useState<DashboardDigitalAccess>(DEFAULT_DIGITAL_ACCESS);
+  const [dataSource, setDataSource] =
+    useState<DashboardDataSource>(DEFAULT_DATA_SOURCE);
+  const [digitalAccess, setDigitalAccess] = useState<DashboardDigitalAccess>(
+    DEFAULT_DIGITAL_ACCESS,
+  );
   const [locationKind, setLocationKind] = useState<DashboardLocationKind>(
-    DEFAULT_LOCATION_KIND
+    DEFAULT_LOCATION_KIND,
   );
   const [profession, setProfession] = useState(DEFAULT_PROFESSION);
   const [selectedCenter] = useState<Center | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [centers, setCenters] = useState<Center[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [filterFacets, setFilterFacets] = useState<CenterFilterFacets | null>(null);
+  const [filterFacets, setFilterFacets] = useState<CenterFilterFacets | null>(
+    null,
+  );
   const hasLoadedCentersRef = useRef(false);
 
   const requestParams = useMemo(
@@ -366,8 +405,9 @@ export default function DashboardClient({ user }: DashboardProps) {
         locationKind,
         profession,
         selectedHandicaps,
+        minScore,
       }),
-    [searchQuery, dataSource, digitalAccess, locationKind, profession, selectedHandicaps]
+    [searchQuery, dataSource, digitalAccess, locationKind, profession, selectedHandicaps, minScore],
   );
   const cacheKey = useMemo(() => buildCacheKey(requestParams), [requestParams]);
 
@@ -388,7 +428,7 @@ export default function DashboardClient({ user }: DashboardProps) {
           if (isMounted) setFilterFacets(facets);
         })
         .catch((err) => {
-          console.warn('Impossible de charger les filtres:', err);
+          console.warn("Impossible de charger les filtres:", err);
         });
     }, 150);
 
@@ -399,20 +439,33 @@ export default function DashboardClient({ user }: DashboardProps) {
   }, [requestParams]);
 
   const dataSourceOptions = useMemo(
-    () => mergeFacetOptions(FALLBACK_DATA_SOURCE_OPTIONS, filterFacets?.dataSources),
-    [filterFacets]
+    () =>
+      mergeFacetOptions(
+        FALLBACK_DATA_SOURCE_OPTIONS,
+        filterFacets?.dataSources,
+      ),
+    [filterFacets],
   );
   const digitalAccessOptions = useMemo(
-    () => mergeFacetOptions(FALLBACK_DIGITAL_ACCESS_OPTIONS, filterFacets?.digitalAccess),
-    [filterFacets]
+    () =>
+      mergeFacetOptions(
+        FALLBACK_DIGITAL_ACCESS_OPTIONS,
+        filterFacets?.digitalAccess,
+      ),
+    [filterFacets],
   );
   const locationKindOptions = useMemo(
-    () => mergeFacetOptions(FALLBACK_LOCATION_KIND_OPTIONS, filterFacets?.locationKinds),
-    [filterFacets]
+    () =>
+      mergeFacetOptions(
+        FALLBACK_LOCATION_KIND_OPTIONS,
+        filterFacets?.locationKinds,
+      ),
+    [filterFacets],
   );
   const professionOptions = useMemo(
-    () => mergeFacetOptions(FALLBACK_PROFESSION_OPTIONS, filterFacets?.professions),
-    [filterFacets]
+    () =>
+      mergeFacetOptions(FALLBACK_PROFESSION_OPTIONS, filterFacets?.professions),
+    [filterFacets],
   );
 
   useEffect(() => {
@@ -443,7 +496,8 @@ export default function DashboardClient({ user }: DashboardProps) {
             handicapTypes: requestParams.handicapTypes,
             handicapMinScore: requestParams.handicapMinScore,
           };
-          const shouldProgressivelyExpandSearch = requestParams.search.length >= 3;
+          const shouldProgressivelyExpandSearch =
+            requestParams.search.length >= 3;
           let mergedCenters = cachedCenters || [];
           let offset = cachedCenters?.length || 0;
 
@@ -464,7 +518,11 @@ export default function DashboardClient({ user }: DashboardProps) {
           }
 
           const shouldFetchMore = () => {
-            if (!requestParams.search) return mergedCenters.length < INITIAL_RESULTS_LIMIT + BACKGROUND_RESULTS_LIMIT;
+            if (!requestParams.search)
+              return (
+                mergedCenters.length <
+                INITIAL_RESULTS_LIMIT + BACKGROUND_RESULTS_LIMIT
+              );
             if (!shouldProgressivelyExpandSearch) return false;
 
             const filteredCount = mergedCenters.filter((center) =>
@@ -476,19 +534,29 @@ export default function DashboardClient({ user }: DashboardProps) {
                 locationKind,
                 profession,
                 selectedHandicaps,
-              })
+              }),
             ).length;
 
-            return filteredCount < LOW_RESULT_THRESHOLD && mergedCenters.length < SEARCH_MAX_RESULTS;
+            return (
+              filteredCount < LOW_RESULT_THRESHOLD &&
+              mergedCenters.length < SEARCH_MAX_RESULTS
+            );
           };
 
           if (shouldFetchMore()) {
-            await new Promise((resolve) => window.setTimeout(resolve, BACKGROUND_PREFETCH_DELAY_MS));
+            await new Promise((resolve) =>
+              window.setTimeout(resolve, BACKGROUND_PREFETCH_DELAY_MS),
+            );
           }
 
           while (isMounted && shouldFetchMore()) {
-            const maxResults = requestParams.search ? SEARCH_MAX_RESULTS : INITIAL_RESULTS_LIMIT + BACKGROUND_RESULTS_LIMIT;
-            const pageLimit = Math.min(BACKGROUND_RESULTS_LIMIT, maxResults - mergedCenters.length);
+            const maxResults = requestParams.search
+              ? SEARCH_MAX_RESULTS
+              : INITIAL_RESULTS_LIMIT + BACKGROUND_RESULTS_LIMIT;
+            const pageLimit = Math.min(
+              BACKGROUND_RESULTS_LIMIT,
+              maxResults - mergedCenters.length,
+            );
             if (pageLimit <= 0) break;
 
             setIsRefreshing(true);
@@ -516,7 +584,7 @@ export default function DashboardClient({ user }: DashboardProps) {
             setError(
               err instanceof Error
                 ? err.message
-                : "Impossible de charger les centres"
+                : "Impossible de charger les centres",
             );
           }
         } finally {
@@ -555,20 +623,33 @@ export default function DashboardClient({ user }: DashboardProps) {
         locationKind,
         profession,
         selectedHandicaps,
-      })
+      }),
     );
-  }, [centers, minScore, dataSource, digitalAccess, locationKind, profession, selectedHandicaps]);
+  }, [
+    centers,
+    minScore,
+    dataSource,
+    digitalAccess,
+    locationKind,
+    profession,
+    selectedHandicaps,
+  ]);
 
   const mapCenters = useMemo(
     () => sortCentersForMap(filteredCenters).slice(0, MAP_MARKER_LIMIT),
-    [filteredCenters]
+    [filteredCenters],
   );
 
   const refreshCurrentSearch = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(cacheKey);
     }
     setRefreshNonce((value) => value + 1);
+  };
+
+  const handleApplyFilters = (score: number) => {
+    setMinScore(score);
+    refreshCurrentSearch();
   };
 
   const handleViewDetails = (center: Center) => {
@@ -580,7 +661,7 @@ export default function DashboardClient({ user }: DashboardProps) {
     // Transformation en <main> pour les repères de navigation (Landmarks)
     <main id="main-content" className="min-h-screen bg-muted/30">
       <h1 className="sr-only">Recherche et liste des centres de santé</h1>
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar */}
         <div className="mb-6">
@@ -590,7 +671,10 @@ export default function DashboardClient({ user }: DashboardProps) {
               <label htmlFor="search-input" className="sr-only">
                 Rechercher par ville, code postal, nom du centre
               </label>
-              <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search
+                aria-hidden="true"
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+              />
               <Input
                 id="search-input"
                 type="search"
@@ -607,7 +691,9 @@ export default function DashboardClient({ user }: DashboardProps) {
               onClick={refreshCurrentSearch}
               disabled={isLoading || isRefreshing}
             >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               Rafraîchir
             </Button>
             {/*<Button variant="outline" className="gap-2">
@@ -637,33 +723,60 @@ export default function DashboardClient({ user }: DashboardProps) {
               digitalAccessOptions={digitalAccessOptions}
               locationKindOptions={locationKindOptions}
               professionOptions={professionOptions}
+              onApplyFilters={handleApplyFilters}
             />
           </aside>
 
           {/* Main Content */}
-          <section className="lg:col-span-3" aria-label="Résultats de recherche">
+          <section
+            className="lg:col-span-3"
+            aria-label="Résultats de recherche"
+          >
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground" aria-live="polite" aria-atomic="true">
-                  {filteredCenters.length} centre{filteredCenters.length > 1 ? 's' : ''} trouvé{filteredCenters.length > 1 ? 's' : ''}
+                <p
+                  className="text-muted-foreground"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {filteredCenters.length} centre
+                  {filteredCenters.length > 1 ? "s" : ""} trouvé
+                  {filteredCenters.length > 1 ? "s" : ""}
                 </p>
-                {viewMode === 'map' && filteredCenters.length > mapCenters.length && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {mapCenters.length} meilleurs résultats affichés sur la carte
-                  </p>
-                )}
+                {viewMode === "map" &&
+                  filteredCenters.length > mapCenters.length && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {mapCenters.length} meilleurs résultats affichés sur la
+                      carte
+                    </p>
+                  )}
                 {isRefreshing && (
-                  <p className="text-xs text-muted-foreground mt-1">Mise à jour des résultats...</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mise à jour des résultats...
+                  </p>
                 )}
               </div>
 
-              <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'map' | 'list')}>
+              <Tabs
+                value={viewMode}
+                onValueChange={(value: string) =>
+                  setViewMode(value as "map" | "list")
+                }
+              >
                 <TabsList aria-label="Modes d'affichage des résultats">
-                  <TabsTrigger value="map" className="gap-2" aria-label='Afficher la carte des centres'>
+                  <TabsTrigger
+                    value="map"
+                    className="gap-2"
+                    aria-label="Afficher la carte des centres"
+                  >
                     <MapIcon aria-hidden="true" className="h-4 w-4" />
                     Carte
                   </TabsTrigger>
-                  <TabsTrigger value="list" className="gap-2" aria-label="Afficher la liste des centres">
+                  <TabsTrigger
+                    value="list"
+                    className="gap-2"
+                    aria-label="Afficher la liste des centres"
+                  >
                     <List aria-hidden="true" className="h-4 w-4" />
                     Liste
                   </TabsTrigger>
@@ -673,13 +786,23 @@ export default function DashboardClient({ user }: DashboardProps) {
 
             {isLoading ? (
               // Rôle status pour les chargements
-              <div className="text-center py-12" role="status" aria-live="polite">
-                <p className="text-muted-foreground">Chargement des centres...</p>
+              <div
+                className="text-center py-12"
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-muted-foreground">
+                  Chargement des centres...
+                </p>
                 <span className="sr-only">Veuillez patienter</span>
               </div>
             ) : error ? (
               // Rôle alert pour les erreurs afin d'interrompre l'utilisateur
-              <div className="text-center py-12" role="alert" aria-live="assertive">
+              <div
+                className="text-center py-12"
+                role="alert"
+                aria-live="assertive"
+              >
                 <p className="text-destructive">{error}</p>
                 <Button
                   variant="link"
@@ -689,7 +812,7 @@ export default function DashboardClient({ user }: DashboardProps) {
                   Réessayer
                 </Button>
               </div>
-            ) : viewMode === 'map' ? (
+            ) : viewMode === "map" ? (
               <div className="h-[600px]">
                 <MapView
                   centers={mapCenters}
@@ -700,7 +823,7 @@ export default function DashboardClient({ user }: DashboardProps) {
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {filteredCenters.length > 0 ? (
-                  filteredCenters.map(center => (
+                  filteredCenters.map((center) => (
                     <CenterCard
                       key={center.id}
                       center={center}
@@ -708,19 +831,23 @@ export default function DashboardClient({ user }: DashboardProps) {
                     />
                   ))
                 ) : (
-                  <div className="col-span-2 text-center py-12" role="status" aria-live="polite">
+                  <div
+                    className="col-span-2 text-center py-12"
+                    role="status"
+                    aria-live="polite"
+                  >
                     <p className="text-muted-foreground">
                       Aucun centre ne correspond à vos critères de recherche.
                     </p>
                     <Button
                       variant="link"
                       onClick={() => {
-                        setSearchQuery('');
+                        setSearchQuery("");
                         setMinScore(0);
-                        setDataSource('all');
-                        setDigitalAccess('all');
-                        setLocationKind('all');
-                        setProfession('all');
+                        setDataSource("all");
+                        setDigitalAccess("all");
+                        setLocationKind("all");
+                        setProfession("all");
                         setSelectedHandicaps([]);
                       }}
                       className="mt-2"

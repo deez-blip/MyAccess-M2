@@ -17,19 +17,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-type HandicapType =
-  | "moteur"
-  | "sensoriel"
-  | "mental"
-  | "psychique"
-  | "cognitif";
+
+
+import { HandicapType } from "@/types";
 
 const handicapTypes: { value: HandicapType; label: string }[] = [
-  { value: "moteur", label: "Handicaps moteurs" },
-  { value: "sensoriel", label: "Handicaps sensoriels" },
-  { value: "mental", label: "Handicaps mentaux" },
-  { value: "psychique", label: "Handicaps psychiques" },
-  { value: "cognitif", label: "Handicaps cognitifs" },
+  { value: 'wheelchair', label: 'Fauteuil roulant' },
+  { value: 'walking_difficulty', label: 'Marche difficile' },
+  { value: 'vision', label: 'Déficience visuelle' },
+  { value: 'hearing', label: 'Déficience auditive' },
+  { value: 'intellectual', label: 'Déficience intellectuelle' },
+  { value: 'psychological', label: 'Handicap psychique' },
+  { value: 'autism', label: 'TSA' },
+  { value: 'obesity', label: 'Obésité' },
 ];
 
 export default function SignUpPage() {
@@ -77,7 +77,8 @@ export default function SignUpPage() {
     if (!formData.password) {
       newErrors.password = "Mot de passe requis";
     } else if (formData.password.length < 6) {
-      newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+      newErrors.password =
+        "Le mot de passe doit contenir au moins 6 caractères";
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -111,7 +112,7 @@ export default function SignUpPage() {
         setGeneralError(
           error instanceof Error
             ? error.message
-            : "Une erreur est survenue lors de l'inscription"
+            : "Une erreur est survenue lors de l'inscription",
         );
       } finally {
         setIsSubmitting(false);
@@ -132,16 +133,20 @@ export default function SignUpPage() {
 
   return (
     // Évolution v2 : Fond bleu lumineux et conteneur relatif pour les décorations
-    <main id="main-content" className="min-h-screen flex items-center justify-center bg-[#f4f8ff] font-sans p-4 relative overflow-hidden">
+    <main
+      id="main-content"
+      className="min-h-screen flex items-center justify-center bg-[#f4f8ff] font-sans p-4 relative overflow-hidden"
+    >
       <h1 className="sr-only">Création de compte MyAccess</h1>
-      
+
       {/* Annonce invisible pour lecteur d'écran lors du changement d'étape */}
       <div aria-live="polite" className="sr-only">
-        Étape {step} sur 2 : {step === 1 ? "Créer un compte" : "Personnalisez votre profil"}
+        Étape {step} sur 2 :{" "}
+        {step === 1 ? "Créer un compte" : "Personnalisez votre profil"}
       </div>
 
       {/* Cercles de décoration en arrière-plan (masqués pour l'accessibilité) */}
-      <div 
+      <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none select-none z-0"
         aria-hidden="true"
       >
@@ -164,7 +169,6 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            
             {/* Gestion des erreurs globales accessible */}
             {generalError && (
               <div
@@ -182,7 +186,12 @@ export default function SignUpPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="firstName" className="text-sm font-bold text-[#14284b]">Prénom</Label>
+                    <Label
+                      htmlFor="firstName"
+                      className="text-sm font-bold text-[#14284b]"
+                    >
+                      Prénom
+                    </Label>
                     <Input
                       id="firstName"
                       type="text"
@@ -193,18 +202,29 @@ export default function SignUpPage() {
                       }
                       className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.firstName ? "border-destructive focus-visible:border-destructive" : ""}`}
                       aria-invalid={!!errors.firstName}
-                      aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                      aria-describedby={
+                        errors.firstName ? "firstName-error" : undefined
+                      }
                       disabled={isLoading}
                     />
                     {errors.firstName && (
-                      <p id="firstName-error" className="text-sm font-medium text-destructive mt-1" role="alert">
+                      <p
+                        id="firstName-error"
+                        className="text-sm font-medium text-destructive mt-1"
+                        role="alert"
+                      >
                         {errors.firstName}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="lastName" className="text-sm font-bold text-[#14284b]">Nom</Label>
+                    <Label
+                      htmlFor="lastName"
+                      className="text-sm font-bold text-[#14284b]"
+                    >
+                      Nom
+                    </Label>
                     <Input
                       id="lastName"
                       type="text"
@@ -215,11 +235,17 @@ export default function SignUpPage() {
                       }
                       className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.lastName ? "border-destructive focus-visible:border-destructive" : ""}`}
                       aria-invalid={!!errors.lastName}
-                      aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                      aria-describedby={
+                        errors.lastName ? "lastName-error" : undefined
+                      }
                       disabled={isLoading}
                     />
                     {errors.lastName && (
-                      <p id="lastName-error" className="text-sm font-medium text-destructive mt-1" role="alert">
+                      <p
+                        id="lastName-error"
+                        className="text-sm font-medium text-destructive mt-1"
+                        role="alert"
+                      >
                         {errors.lastName}
                       </p>
                     )}
@@ -227,7 +253,12 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-sm font-bold text-[#14284b]">Adresse email</Label>
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-bold text-[#14284b]"
+                  >
+                    Adresse email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -242,14 +273,23 @@ export default function SignUpPage() {
                     disabled={isLoading}
                   />
                   {errors.email && (
-                    <p id="email-error" className="text-sm font-medium text-destructive mt-1" role="alert">
+                    <p
+                      id="email-error"
+                      className="text-sm font-medium text-destructive mt-1"
+                      role="alert"
+                    >
                       {errors.email}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-sm font-bold text-[#14284b]">Mot de passe</Label>
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-bold text-[#14284b]"
+                  >
+                    Mot de passe
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -260,18 +300,29 @@ export default function SignUpPage() {
                     }
                     className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.password ? "border-destructive focus-visible:border-destructive" : ""}`}
                     aria-invalid={!!errors.password}
-                    aria-describedby={errors.password ? "password-error" : undefined}
+                    aria-describedby={
+                      errors.password ? "password-error" : undefined
+                    }
                     disabled={isLoading}
                   />
                   {errors.password && (
-                    <p id="password-error" className="text-sm font-medium text-destructive mt-1" role="alert">
+                    <p
+                      id="password-error"
+                      className="text-sm font-medium text-destructive mt-1"
+                      role="alert"
+                    >
                       {errors.password}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword" className="text-sm font-bold text-[#14284b]">Confirmer le mot de passe</Label>
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-bold text-[#14284b]"
+                  >
+                    Confirmer le mot de passe
+                  </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -285,11 +336,19 @@ export default function SignUpPage() {
                     }
                     className={`rounded-xl h-11 border-slate-200 focus-visible:ring-primary/20 focus-visible:border-primary transition-all ${errors.confirmPassword ? "border-destructive focus-visible:border-destructive" : ""}`}
                     aria-invalid={!!errors.confirmPassword}
-                    aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
+                    aria-describedby={
+                      errors.confirmPassword
+                        ? "confirmPassword-error"
+                        : undefined
+                    }
                     disabled={isLoading}
                   />
                   {errors.confirmPassword && (
-                    <p id="confirmPassword-error" className="text-sm font-medium text-destructive mt-1" role="alert">
+                    <p
+                      id="confirmPassword-error"
+                      className="text-sm font-medium text-destructive mt-1"
+                      role="alert"
+                    >
                       {errors.confirmPassword}
                     </p>
                   )}
@@ -306,9 +365,16 @@ export default function SignUpPage() {
                   <p className="text-sm text-[#556987] font-medium mb-5">
                     Cela nous aidera à personnaliser vos résultats de recherche.
                   </p>
-                  <div className="space-y-3.5" role="group" aria-label="Sélectionnez vos types de handicap">
+                  <div
+                    className="space-y-3.5"
+                    role="group"
+                    aria-label="Sélectionnez vos besoins en aménagements et services"
+                  >
                     {handicapTypes.map((type) => (
-                      <div key={type.value} className="flex items-center space-x-3">
+                      <div
+                        key={type.value}
+                        className="flex items-center space-x-3"
+                      >
                         <Checkbox
                           id={type.value}
                           checked={formData.handicapTypes.includes(type.value)}
@@ -341,14 +407,17 @@ export default function SignUpPage() {
                   Retour
                 </Button>
               )}
-              <Button 
-                type="submit" 
-                className="flex-[2] h-11 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 transition-all focus:ring-2 focus:ring-primary/50 focus:ring-offset-2" 
+              <Button
+                type="submit"
+                className="flex-[2] h-11 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 transition-all focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 aria-hidden="true" className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2
+                      aria-hidden="true"
+                      className="mr-2 h-5 w-5 animate-spin"
+                    />
                     {step === 1 ? "Chargement..." : "Création..."}
                   </>
                 ) : step === 1 ? (
@@ -372,7 +441,10 @@ export default function SignUpPage() {
 
             <div className="text-center text-sm font-medium text-[#556987] pt-2">
               Déjà un compte ?{" "}
-              <Link className="text-primary font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded px-1 transition-colors" href="/login">
+              <Link
+                className="text-primary font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded px-1 transition-colors"
+                href="/login"
+              >
                 Se connecter
               </Link>
             </div>

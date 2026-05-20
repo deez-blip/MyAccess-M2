@@ -1,33 +1,36 @@
-export type HandicapType = 
-  | 'sensoriel' 
-  | 'moteur' 
-  | 'mental' 
-  | 'psychique' 
-  | 'cognitif';
+export type HandicapType =
+  | "wheelchair"
+  | "walking_difficulty"
+  | "vision"
+  | "hearing"
+  | "intellectual"
+  | "psychological"
+  | "autism"
+  | "obesity";
 
-export type CenterSource = 'healthcare';
+export type CenterSource = "healthcare";
 
-export type OfferType = 'vaccination' | 'depistage' | 'healthcare';
+export type OfferType = "vaccination" | "depistage" | "healthcare";
 
-export type DashboardOfferType = 'all' | OfferType;
+export type DashboardOfferType = "all" | OfferType;
 
 export type DashboardDataSource =
-  | 'all'
-  | 'practitioners'
-  | 'establishments'
-  | 'mixed';
+  | "all"
+  | "practitioners"
+  | "establishments"
+  | "mixed";
 
 export type DashboardDigitalAccess =
-  | 'all'
-  | 'online_booking'
-  | 'website'
-  | 'doctolib';
+  | "all"
+  | "online_booking"
+  | "website"
+  | "doctolib";
 
 export type LocationKind =
-  | 'individual_or_small_practice'
-  | 'probable_group_practice'
-  | 'probable_specialist_group'
-  | 'probable_health_center_or_shared_site';
+  | "individual_or_small_practice"
+  | "probable_group_practice"
+  | "probable_specialist_group"
+  | "probable_health_center_or_shared_site";
 
 export type PlaceCategoryFilter = `place_category:${string}`;
 
@@ -62,9 +65,9 @@ export interface AccessibilityScore {
 }
 
 export type AccessibilityAuditStatus =
-  | 'unknown'
-  | 'audited_accessible'
-  | 'audited_inaccessible';
+  | "unknown"
+  | "audited_accessible"
+  | "audited_inaccessible";
 
 export interface DigitalAccess {
   hasOnlineBooking: boolean;
@@ -82,10 +85,10 @@ export interface DigitalAccess {
 }
 
 export type ReviewItemStatus =
-  | 'confirmed_present'
-  | 'reported_absent'
-  | 'reported_present'
-  | 'custom_present';
+  | "confirmed_present"
+  | "reported_absent"
+  | "reported_present"
+  | "custom_present";
 
 export interface AccessibilityCriterion {
   key: string;
@@ -168,8 +171,8 @@ export interface Appointment {
   centerName: string;
   date: string;
   time: string;
-  type: 'vaccination' | 'depistage';
-  status: 'upcoming' | 'past' | 'cancelled';
+  type: "vaccination" | "depistage";
+  status: "upcoming" | "past" | "cancelled";
 }
 
 export interface Notification {
@@ -179,5 +182,5 @@ export interface Notification {
   message: string;
   date: string;
   read: boolean;
-  type: 'appointment' | 'review' | 'system';
+  type: "appointment" | "review" | "system";
 }

@@ -40,11 +40,14 @@ interface CustomAccessibilityItem {
 }
 
 const handicapTypes: { value: HandicapType; label: string }[] = [
-  { value: 'moteur', label: 'Moteur' },
-  { value: 'sensoriel', label: 'Sensoriel' },
-  { value: 'mental', label: 'Mental' },
-  { value: 'psychique', label: 'Psychique' },
-  { value: 'cognitif', label: 'Cognitif' },
+  { value: 'wheelchair', label: 'Fauteuil roulant' },
+  { value: 'walking_difficulty', label: 'Marche difficile' },
+  { value: 'vision', label: 'Déficience visuelle' },
+  { value: 'hearing', label: 'Déficience auditive' },
+  { value: 'intellectual', label: 'Déficience intellectuelle' },
+  { value: 'psychological', label: 'Handicap psychique' },
+  { value: 'autism', label: 'TSA' },
+  { value: 'obesity', label: 'Obésité' },
 ];
 
 const allowedHandicapTypes = new Set<HandicapType>(

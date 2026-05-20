@@ -4,19 +4,29 @@ import {
   DashboardLocationKind,
   FilterFacetOption,
   HandicapType,
-} from '@/types';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Filter } from 'lucide-react';
+} from "@/types";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Filter } from "lucide-react";
 
 interface FilterPanelProps {
   selectedHandicaps: HandicapType[];
   onHandicapChange: (handicaps: HandicapType[]) => void;
   minScore: number;
   onMinScoreChange: (score: number) => void;
+  onApplyFilters?: (score: number) => void;
   dataSource: DashboardDataSource;
   onDataSourceChange: (source: DashboardDataSource) => void;
   digitalAccess: DashboardDigitalAccess;
@@ -32,11 +42,14 @@ interface FilterPanelProps {
 }
 
 const handicapTypes: { value: HandicapType; label: string; icon: string }[] = [
-  { value: 'moteur', label: 'Handicaps moteurs', icon: '🦽' },
-  { value: 'sensoriel', label: 'Handicaps sensoriels', icon: '👁️' },
-  { value: 'mental', label: 'Handicaps mentaux', icon: '🧠' },
-  { value: 'psychique', label: 'Handicaps psychiques', icon: '💭' },
-  { value: 'cognitif', label: 'Handicaps cognitifs', icon: '🎯' },
+  { value: 'wheelchair', label: 'Fauteuil roulant', icon: '🦽' },
+  { value: 'walking_difficulty', label: 'Marche difficile', icon: '🦯' },
+  { value: 'vision', label: 'Déficience visuelle', icon: '👁️' },
+  { value: 'hearing', label: 'Déficience auditive', icon: '🦻' },
+  { value: 'intellectual', label: 'Déficience intellectuelle', icon: '🧠' },
+  { value: 'psychological', label: 'Handicap psychique', icon: '💭' },
+  { value: 'autism', label: 'TSA', icon: '🧩' },
+  { value: 'obesity', label: 'Obésité', icon: '⚖️' },
 ];
 
 const dataSourceLabels: Record<DashboardDataSource, string> = {
@@ -47,10 +60,10 @@ const dataSourceLabels: Record<DashboardDataSource, string> = {
 };
 
 const digitalAccessLabels: Record<DashboardDigitalAccess, string> = {
-  all: 'Tous',
-  online_booking: 'RDV en ligne',
-  website: 'Site web renseigné',
-  doctolib: 'Doctolib',
+  all: "Tous",
+  online_booking: "RDV en ligne",
+  website: "Site web renseigné",
+  doctolib: "Doctolib",
 };
 
 const locationKindLabels: Partial<Record<DashboardLocationKind, string>> = {
@@ -70,7 +83,7 @@ function getLocationKindLabel(value: DashboardLocationKind) {
 }
 
 function formatCount(count: number) {
-  return new Intl.NumberFormat('fr-FR').format(count);
+  return new Intl.NumberFormat("fr-FR").format(count);
 }
 
 function optionLabel(label: string, count?: number) {
@@ -82,6 +95,7 @@ export function FilterPanel({
   onHandicapChange,
   minScore,
   onMinScoreChange,
+  onApplyFilters,
   dataSource,
   onDataSourceChange,
   digitalAccess,
@@ -97,10 +111,30 @@ export function FilterPanel({
 }: FilterPanelProps) {
   const toggleHandicap = (handicap: HandicapType) => {
     if (selectedHandicaps.includes(handicap)) {
-      onHandicapChange(selectedHandicaps.filter(h => h !== handicap));
+      onHandicapChange(selectedHandicaps.filter((h) => h !== handicap));
     } else {
       onHandicapChange([...selectedHandicaps, handicap]);
     }
+  };
+
+  const [inputValue, setInputValue] = useState(String(minScore ?? 0));
+
+  // keep inputValue in sync when parent minScore changes (e.g., reset)
+  useEffect(() => {
+    setInputValue(String(minScore ?? 0));
+  }, [minScore]);
+
+  const applyInput = () => {
+    const parsed = Number.parseFloat(inputValue);
+    if (Number.isNaN(parsed)) {
+      onApplyFilters?.(0);
+      return;
+    }
+    let clamped = Math.max(0, Math.min(5, parsed));
+    clamped = Math.round(clamped * 2) / 2;
+    // notify parent the user applied the desired min score
+    if (onApplyFilters) onApplyFilters(clamped);
+    else onMinScoreChange(clamped);
   };
 
   return (
@@ -116,7 +150,9 @@ export function FilterPanel({
           <Label className="mb-3 block">Source</Label>
           <Select
             value={dataSource}
-            onValueChange={(value: DashboardDataSource) => onDataSourceChange(value)}
+            onValueChange={(value: DashboardDataSource) =>
+              onDataSourceChange(value)
+            }
             aria-label="Sélectionner la source des lieux"
           >
             <SelectTrigger>
@@ -136,7 +172,9 @@ export function FilterPanel({
           <Label className="mb-3 block">Type de lieu</Label>
           <Select
             value={locationKind}
-            onValueChange={(value: DashboardLocationKind) => onLocationKindChange(value)}
+            onValueChange={(value: DashboardLocationKind) =>
+              onLocationKindChange(value)
+            }
             aria-label="Sélectionner le type de lieu"
           >
             <SelectTrigger>
@@ -178,7 +216,9 @@ export function FilterPanel({
           <Label className="mb-3 block">Accès numérique</Label>
           <Select
             value={digitalAccess}
-            onValueChange={(value: DashboardDigitalAccess) => onDigitalAccessChange(value)}
+            onValueChange={(value: DashboardDigitalAccess) =>
+              onDigitalAccessChange(value)
+            }
             aria-label="Sélectionner un accès numérique"
           >
             <SelectTrigger>
@@ -199,24 +239,36 @@ export function FilterPanel({
             <Label>Score d&apos;accessibilité minimum</Label>
             <span className="text-sm text-muted-foreground">{minScore}/5</span>
           </div>
-          <Slider
-            value={[minScore]}
-            onValueChange={(values: number[]) => onMinScoreChange(values[0])}
-            min={0}
-            max={5}
-            step={0.5}
-            className="mb-2"
-            aria-label="Score d'accessibilité minimum"
-          />
+          <div className="mb-2 flex items-center gap-2">
+            <Input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              aria-label="Score d'accessibilité minimum"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label="Appliquer les filtres"
+              onClick={applyInput}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0</span>
             <span>5</span>
           </div>
         </div>
 
-        {/* Types de handicap */}
+        {/* Types de services (anciennement types de handicap) */}
         <div>
-          <Label className="mb-3 block">Filtrer par type de handicap</Label>
+          <Label className="mb-3 block">
+            Filtrer par type de services / équipements
+          </Label>
           <div className="space-y-3">
             {handicapTypes.map((type) => (
               <div key={type.value} className="flex items-center space-x-2">
@@ -241,11 +293,12 @@ export function FilterPanel({
         <button
           onClick={() => {
             onHandicapChange([]);
-            onMinScoreChange(0);
-            onDataSourceChange('all');
-            onDigitalAccessChange('all');
-            onLocationKindChange('all');
-            onProfessionChange('all');
+            if (onApplyFilters) onApplyFilters(0);
+            else onMinScoreChange(0);
+            onDataSourceChange("all");
+            onDigitalAccessChange("all");
+            onLocationKindChange("all");
+            onProfessionChange("all");
           }}
           className="w-full text-sm text-primary hover:underline"
         >

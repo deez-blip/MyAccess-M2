@@ -104,7 +104,9 @@ function roundScore(value) {
 }
 
 function sanitizeText(value, maxLength) {
-  return String(value || "").trim().slice(0, maxLength);
+  return String(value || "")
+    .trim()
+    .slice(0, maxLength);
 }
 
 function slugifyKey(value) {
@@ -120,15 +122,24 @@ function slugifyKey(value) {
 }
 
 function normalizeHandicapTypes(values) {
-  const allowedHandicapTypes = new Set(Object.keys(HANDICAP_SCORE_PROFILES));
+  const allowedHandicapTypes = new Set([
+    "wheelchair",
+    "walking_difficulty",
+    "vision",
+    "hearing",
+    "intellectual",
+    "psychological",
+    "autism",
+    "obesity",
+  ]);
   const rawValues = Array.isArray(values) ? values : parseListParam(values);
 
   return Array.from(
     new Set(
       rawValues
         .map((value) => String(value || "").trim())
-        .filter((value) => allowedHandicapTypes.has(value))
-    )
+        .filter((value) => allowedHandicapTypes.has(value)),
+    ),
   );
 }
 
@@ -138,7 +149,7 @@ function buildAccessibilityCriteria(profileCounts = {}, digitalAccess = {}) {
       typeof criterion.isPresent === "function"
         ? criterion.isPresent(profileCounts, digitalAccess)
         : (criterion.profiles || []).some(
-            (profile) => Number(profileCounts[profile] || 0) > 0
+            (profile) => Number(profileCounts[profile] || 0) > 0,
           );
 
     return {
@@ -169,14 +180,14 @@ function reviewSignalsToFrontend(reviewSignals = {}) {
       Object.keys(HANDICAP_SCORE_PROFILES).map((handicapType) => [
         handicapType,
         roundScore(Number(handicapDeltas[handicapType] || 0)),
-      ])
+      ]),
     ),
   };
 }
 
 function inferReviewRating(items) {
   const reportedAbsentCount = items.filter(
-    (item) => item.status === "reported_absent"
+    (item) => item.status === "reported_absent",
   ).length;
 
   if (reportedAbsentCount >= 4) return 1;
@@ -193,9 +204,9 @@ function mapHealthcareReviewToFrontend(review) {
   const handicapTypes = Array.from(
     new Set(
       items.flatMap((item) =>
-        Array.isArray(item.handicapTypes) ? item.handicapTypes : []
-      )
-    )
+        Array.isArray(item.handicapTypes) ? item.handicapTypes : [],
+      ),
+    ),
   );
 
   return {
@@ -285,10 +296,10 @@ function buildHealthcareReviewPayload(body, location) {
   const digitalAccess = digitalAccessToFrontend(location.digital_access);
   const criteria = buildAccessibilityCriteria(
     location.profile_counts || {},
-    digitalAccess
+    digitalAccess,
   );
   const criteriaByKey = new Map(
-    criteria.map((criterion) => [criterion.key, criterion])
+    criteria.map((criterion) => [criterion.key, criterion]),
   );
   const submittedCriteria = Array.isArray(body?.criteria)
     ? body.criteria.slice(0, 50)
@@ -299,10 +310,7 @@ function buildHealthcareReviewPayload(body, location) {
   const reviewItems = [];
 
   for (const item of submittedCriteria) {
-    const criterionKey = sanitizeText(
-      item?.criterionKey || item?.key,
-      100
-    );
+    const criterionKey = sanitizeText(item?.criterionKey || item?.key, 100);
     const status = sanitizeText(item?.status, 40);
     const criterion = criteriaByKey.get(criterionKey);
 
@@ -310,7 +318,10 @@ function buildHealthcareReviewPayload(body, location) {
       return { error: `Critère d'accessibilité inconnu: ${criterionKey}` };
     }
 
-    if (!ALLOWED_REVIEW_ITEM_STATUSES.has(status) || status === "custom_present") {
+    if (
+      !ALLOWED_REVIEW_ITEM_STATUSES.has(status) ||
+      status === "custom_present"
+    ) {
       return { error: `Statut d'avis invalide: ${status}` };
     }
 
@@ -332,8 +343,7 @@ function buildHealthcareReviewPayload(body, location) {
     if (!label) continue;
     if (handicapTypes.length === 0) {
       return {
-        error:
-          "Chaque aide ajoutée doit préciser au moins un type de handicap",
+        error: "Chaque aide ajoutée doit préciser au moins un type de handicap",
       };
     }
 
@@ -348,7 +358,9 @@ function buildHealthcareReviewPayload(body, location) {
 
   const submittedRating = Number(body?.rating);
   const rating =
-    Number.isInteger(submittedRating) && submittedRating >= 1 && submittedRating <= 5
+    Number.isInteger(submittedRating) &&
+    submittedRating >= 1 &&
+    submittedRating <= 5
       ? submittedRating
       : inferReviewRating(reviewItems);
   const storedReviewItems = reviewItems.map((item) => ({
@@ -366,7 +378,11 @@ function buildHealthcareReviewPayload(body, location) {
   };
 }
 
-function scoreHealthcareProfiles(profileCounts, accessibilitySubjectCount, digitalAccess) {
+function scoreHealthcareProfiles(
+  profileCounts,
+  accessibilitySubjectCount,
+  digitalAccess,
+) {
   if (!profileCounts || !accessibilitySubjectCount) {
     return {
       physique: 0,
@@ -375,8 +391,15 @@ function scoreHealthcareProfiles(profileCounts, accessibilitySubjectCount, digit
     };
   }
 
-  const ratio = (profile) => Math.min(1, Number(profileCounts[profile] || 0) / accessibilitySubjectCount);
-  const physique = ((ratio("wheelchair") + ratio("walking_difficulty") + ratio("obesity")) / 3) * 5;
+  const ratio = (profile) =>
+    Math.min(
+      1,
+      Number(profileCounts[profile] || 0) / accessibilitySubjectCount,
+    );
+  const physique =
+    ((ratio("wheelchair") + ratio("walking_difficulty") + ratio("obesity")) /
+      3) *
+    5;
   const numerique = calculateDigitalAvailabilityScore(digitalAccess);
   const accueil =
     ((ratio("hearing") +
@@ -395,17 +418,23 @@ function scoreHealthcareProfiles(profileCounts, accessibilitySubjectCount, digit
   };
 }
 
-function calculateHandicapScores(profileCounts = {}, accessibilitySubjectCount = 0) {
+function calculateHandicapScores(
+  profileCounts = {},
+  accessibilitySubjectCount = 0,
+) {
   const ratioScore = (profile) => {
     if (!accessibilitySubjectCount) return 0;
-    return Math.min(5, (Number(profileCounts[profile] || 0) / accessibilitySubjectCount) * 5);
+    return Math.min(
+      5,
+      (Number(profileCounts[profile] || 0) / accessibilitySubjectCount) * 5,
+    );
   };
 
   return Object.fromEntries(
     Object.entries(HANDICAP_SCORE_PROFILES).map(([handicapType, profiles]) => [
       handicapType,
       roundScore(Math.max(...profiles.map(ratioScore))),
-    ])
+    ]),
   );
 }
 
@@ -424,11 +453,17 @@ function digitalAccessToFrontend(digitalAccess = {}) {
       digitalAccess.doctolib_accessibility_status || "unknown",
     confidence: Number(digitalAccess.confidence || 0),
     source: digitalAccess.digital_access_source || digitalAccess.source || null,
-    checkedAt: digitalAccess.checked_at?.toISOString?.() || digitalAccess.checked_at || null,
+    checkedAt:
+      digitalAccess.checked_at?.toISOString?.() ||
+      digitalAccess.checked_at ||
+      null,
   };
 }
 
-function profileCountsToFrontend(profileCounts = {}, accessibilitySubjectCount = 0) {
+function profileCountsToFrontend(
+  profileCounts = {},
+  accessibilitySubjectCount = 0,
+) {
   return Object.fromEntries(
     [
       "wheelchair",
@@ -445,10 +480,14 @@ function profileCountsToFrontend(profileCounts = {}, accessibilitySubjectCount =
       {
         relevantCount: Number(profileCounts[profile] || 0),
         score: accessibilitySubjectCount
-          ? roundScore((Number(profileCounts[profile] || 0) / accessibilitySubjectCount) * 5)
+          ? roundScore(
+              (Number(profileCounts[profile] || 0) /
+                accessibilitySubjectCount) *
+                5,
+            )
           : 0,
       },
-    ])
+    ]),
   );
 }
 
@@ -460,10 +499,13 @@ function professionsToFrontend(professions = {}) {
 }
 
 function mapHealthcareLocationToFrontend(location, reviews = []) {
-  const practitionerCount = Number(location.link_count || location.practitioner_count || 0);
+  const practitionerCount = Number(
+    location.link_count || location.practitioner_count || 0,
+  );
   const establishmentCount = Number(location.establishment_count || 0);
   const accessibilitySubjectCount = Number(
-    location.accessibility_subject_count || practitionerCount + establishmentCount
+    location.accessibility_subject_count ||
+      practitionerCount + establishmentCount,
   );
   const profileCounts = location.profile_counts || {};
   const digitalAccess = digitalAccessToFrontend(location.digital_access);
@@ -475,13 +517,20 @@ function mapHealthcareLocationToFrontend(location, reviews = []) {
           numerique: Number(precomputedScore.numerique || 0),
           accueil: Number(precomputedScore.accueil || 0),
         }
-      : scoreHealthcareProfiles(profileCounts, accessibilitySubjectCount, digitalAccess);
+      : scoreHealthcareProfiles(
+          profileCounts,
+          accessibilitySubjectCount,
+          digitalAccess,
+        );
   const globalScore =
     location.global_score !== undefined
       ? Number(location.global_score)
       : Math.round(
-          ((accessibilityScore.physique + accessibilityScore.numerique + accessibilityScore.accueil) / 3) *
-            10
+          ((accessibilityScore.physique +
+            accessibilityScore.numerique +
+            accessibilityScore.accueil) /
+            3) *
+            10,
         ) / 10;
   const organizationNames = location.organization_names || [];
   const establishmentNames = location.establishment_names || [];
@@ -500,9 +549,11 @@ function mapHealthcareLocationToFrontend(location, reviews = []) {
   const services = [];
   if (profileCounts.wheelchair > 0) services.push("Fauteuil roulant");
   if (profileCounts.walking_difficulty > 0) services.push("Marche difficile");
-  if (profileCounts.low_vision > 0 || profileCounts.blind > 0) services.push("Déficience visuelle");
+  if (profileCounts.low_vision > 0 || profileCounts.blind > 0)
+    services.push("Déficience visuelle");
   if (profileCounts.hearing > 0) services.push("Déficience auditive");
-  if (profileCounts.intellectual > 0) services.push("Déficience intellectuelle");
+  if (profileCounts.intellectual > 0)
+    services.push("Déficience intellectuelle");
   if (profileCounts.psychological > 0) services.push("Handicap psychique");
   if (profileCounts.autism > 0) services.push("TSA");
   if (profileCounts.obesity > 0) services.push("Obésité");
@@ -526,11 +577,18 @@ function mapHealthcareLocationToFrontend(location, reviews = []) {
     offerTypes: ["healthcare"],
     locationKind: location.kind_guess || location.location_kind || null,
     professions: professionsToFrontend(location.professions),
-    accessibilityProfiles: profileCountsToFrontend(profileCounts, accessibilitySubjectCount),
+    accessibilityProfiles: profileCountsToFrontend(
+      profileCounts,
+      accessibilitySubjectCount,
+    ),
     accessibilityHandicapScores:
-      location.handicap_scores || calculateHandicapScores(profileCounts, accessibilitySubjectCount),
+      location.handicap_scores ||
+      calculateHandicapScores(profileCounts, accessibilitySubjectCount),
     digitalAccess,
-    accessibilityCriteria: buildAccessibilityCriteria(profileCounts, digitalAccess),
+    accessibilityCriteria: buildAccessibilityCriteria(
+      profileCounts,
+      digitalAccess,
+    ),
     reviewSignals: reviewSignalsToFrontend(location.review_signals),
     accessibilityScore,
     globalScore,
@@ -548,9 +606,18 @@ function parseListParam(value) {
 }
 
 function parseHandicapTypes(value) {
-  const allowedHandicapTypes = new Set(Object.keys(HANDICAP_SCORE_PROFILES));
+  const allowedHandicapTypes = new Set([
+    "wheelchair",
+    "walking_difficulty",
+    "vision",
+    "hearing",
+    "intellectual",
+    "psychological",
+    "autism",
+    "obesity",
+  ]);
   return parseListParam(value).filter((handicapType) =>
-    allowedHandicapTypes.has(handicapType)
+    allowedHandicapTypes.has(handicapType),
   );
 }
 
@@ -629,81 +696,35 @@ function buildSearchIndexWhereCondition({
   return sql`${locationKindCondition} ${professionCondition} ${dataSourceCondition} ${digitalAccessCondition}`;
 }
 
-function handicapScoreCondition(handicapType, handicapMinScore) {
-  if (handicapType === "moteur") {
-    return sql`si.moteur_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "sensoriel") {
-    return sql`si.sensoriel_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "mental") {
-    return sql`si.mental_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "psychique") {
-    return sql`si.psychique_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "cognitif") {
-    return sql`si.cognitif_score >= ${handicapMinScore}`;
+function handicapScoreCondition(handicapTypes, minScore) {
+  if (!handicapTypes?.length) {
+    return sql``;
   }
 
-  return sql`FALSE`;
+  const conditions = handicapTypes.flatMap((type) => {
+    if (type === "vision") {
+      return [
+        `COALESCE(CAST(si.profile_counts->>'low_vision' AS INTEGER), 0) > 0`,
+        `COALESCE(CAST(si.profile_counts->>'blind' AS INTEGER), 0) > 0`,
+      ];
+    }
+    return [`COALESCE(CAST(si.profile_counts->>'${type}' AS INTEGER), 0) > 0`];
+  });
+
+  return sql.unsafe(`AND (${conditions.join(" OR ")})`);
 }
 
-function buildSearchIndexHandicapCondition({ handicapTypes, handicapMinScore }) {
-  if (handicapTypes.length === 0) return sql``;
-
-  const conditions = handicapTypes.map((handicapType) =>
-    sql`(${handicapScoreCondition(handicapType, handicapMinScore)})`
-  );
-  const combinedConditions = conditions
-    .slice(1)
-    .reduce((combined, condition) => sql`${combined} AND ${condition}`, conditions[0]);
-
-  return sql`AND ${combinedConditions}`;
-}
-
-function adjustedHandicapScoreCondition(handicapType, handicapMinScore) {
-  if (handicapType === "moteur") {
-    return sql`ranked.adjusted_moteur_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "sensoriel") {
-    return sql`ranked.adjusted_sensoriel_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "mental") {
-    return sql`ranked.adjusted_mental_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "psychique") {
-    return sql`ranked.adjusted_psychique_score >= ${handicapMinScore}`;
-  }
-  if (handicapType === "cognitif") {
-    return sql`ranked.adjusted_cognitif_score >= ${handicapMinScore}`;
-  }
-
-  return sql`FALSE`;
-}
-
-function buildAdjustedHandicapCondition({ handicapTypes, handicapMinScore }) {
-  if (handicapTypes.length === 0) return sql``;
-
-  const conditions = handicapTypes.map((handicapType) =>
-    sql`(${adjustedHandicapScoreCondition(handicapType, handicapMinScore)})`
-  );
-  const combinedConditions = conditions
-    .slice(1)
-    .reduce((combined, condition) => sql`${combined} AND ${condition}`, conditions[0]);
-
-  return sql`AND ${combinedConditions}`;
-}
-
-function buildSearchIndexSearchCondition(search, mode) {
-  const query = String(search || "").trim();
+function buildSearchCondition(searchQuery, mode) {
+  const query = String(searchQuery || "").trim();
   if (!query) return sql``;
 
   const wildcard = `%${query}%`;
   const cityPrefix = `${query} %`;
   const postalPrefix = /^\d{2,5}$/.test(query) ? `${query}%` : null;
   const parisPostalCondition =
-    query.toLocaleLowerCase("fr-FR") === "paris" ? sql`OR si.postal_code LIKE '75%'` : sql``;
+    query.toLocaleLowerCase("fr-FR") === "paris"
+      ? sql`OR si.postal_code LIKE '75%'`
+      : sql``;
 
   if (mode === "location") {
     return sql`
@@ -741,17 +762,17 @@ async function queryHealthcareLocations({
   const parsedOffset = parseInt(offset) || 0;
   const query = String(search || "").trim();
   const idCondition = locationId ? sql`AND si.id = ${locationId}` : sql``;
-  const searchCondition = buildSearchIndexSearchCondition(search, searchMode);
+  const searchCondition = buildSearchCondition(search, searchMode);
   const filterCondition = buildSearchIndexWhereCondition({
     locationKind,
     profession,
     dataSource,
     digitalAccess,
   });
-  const handicapCondition = buildSearchIndexHandicapCondition({
+  const handicapCondition = handicapScoreCondition(
     handicapTypes,
     handicapMinScore,
-  });
+  );
   const searchColumns =
     query && searchMode === "global"
       ? sql`
@@ -852,6 +873,7 @@ async function getHealthcareLocations(options) {
 function parseHealthcareQueryFilters(query) {
   return {
     search: query.search,
+    searchMode: query.search ? "global" : undefined,
     locationKind: query.locationKind || "all",
     profession: query.profession || "all",
     dataSource: parseEnumParam(query.dataSource, DATA_SOURCE_FILTERS),
@@ -862,17 +884,22 @@ function parseHealthcareQueryFilters(query) {
 }
 
 function buildFacetCondition(filters, excludedFacet) {
-  const searchCondition = buildSearchIndexSearchCondition(filters.search, "global");
+  const searchCondition = buildSearchCondition(
+    filters.search,
+    filters.searchMode,
+  );
   const filterCondition = buildSearchIndexWhereCondition({
-    locationKind: excludedFacet === "locationKind" ? "all" : filters.locationKind,
+    locationKind:
+      excludedFacet === "locationKind" ? "all" : filters.locationKind,
     profession: excludedFacet === "profession" ? "all" : filters.profession,
     dataSource: excludedFacet === "dataSource" ? "all" : filters.dataSource,
-    digitalAccess: excludedFacet === "digitalAccess" ? "all" : filters.digitalAccess,
+    digitalAccess:
+      excludedFacet === "digitalAccess" ? "all" : filters.digitalAccess,
   });
-  const handicapCondition = buildSearchIndexHandicapCondition({
-    handicapTypes: filters.handicapTypes || [],
-    handicapMinScore: filters.handicapMinScore ?? HANDICAP_MIN_SCORE_DEFAULT,
-  });
+  const handicapCondition = handicapScoreCondition(
+    filters.handicapTypes || [],
+    filters.handicapMinScore ?? HANDICAP_MIN_SCORE_DEFAULT,
+  );
 
   return sql`${searchCondition} ${filterCondition} ${handicapCondition}`;
 }
@@ -1009,12 +1036,14 @@ router.get("/", async (req, res) => {
 
     res.json(
       healthcareLocations.map((location) =>
-        mapHealthcareLocationToFrontend(location)
-      )
+        mapHealthcareLocationToFrontend(location),
+      ),
     );
   } catch (error) {
     console.error("Erreur lors de la récupération des centres:", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des centres" });
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des centres" });
   }
 });
 
@@ -1023,7 +1052,9 @@ router.get("/facets", async (req, res) => {
     res.json(await getHealthcareFacets(parseHealthcareQueryFilters(req.query)));
   } catch (error) {
     console.error("Erreur lors de la récupération des filtres:", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des filtres" });
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des filtres" });
   }
 });
 
@@ -1047,13 +1078,15 @@ router.get("/:id", async (req, res) => {
         return res.status(404).json({ error: "Centre non trouvé" });
       }
 
-      const reviewsByLocationId = await getHealthcareReviewsByLocationIds([locationId]);
+      const reviewsByLocationId = await getHealthcareReviewsByLocationIds([
+        locationId,
+      ]);
 
       return res.json(
         mapHealthcareLocationToFrontend(
           healthcareLocations[0],
-          reviewsByLocationId.get(locationId) || []
-        )
+          reviewsByLocationId.get(locationId) || [],
+        ),
       );
     }
 
@@ -1122,10 +1155,12 @@ router.post("/:id/reviews", authenticateToken, async (req, res) => {
 
     await recomputeHealthcarePlaceReviewSignals(locationId);
 
-    const reviewsByLocationId = await getHealthcareReviewsByLocationIds([locationId]);
-    const savedFrontendReview = (reviewsByLocationId.get(locationId) || []).find(
-      (review) => review.id === String(savedReview.id)
-    );
+    const reviewsByLocationId = await getHealthcareReviewsByLocationIds([
+      locationId,
+    ]);
+    const savedFrontendReview = (
+      reviewsByLocationId.get(locationId) || []
+    ).find((review) => review.id === String(savedReview.id));
 
     await logAuditEvent({
       req,
@@ -1138,7 +1173,9 @@ router.post("/:id/reviews", authenticateToken, async (req, res) => {
       },
     });
 
-    res.status(201).json(savedFrontendReview || mapHealthcareReviewToFrontend(savedReview));
+    res
+      .status(201)
+      .json(savedFrontendReview || mapHealthcareReviewToFrontend(savedReview));
   } catch (error) {
     console.error("Erreur lors de la publication de l'avis:", error);
     res.status(500).json({ error: "Erreur lors de la publication de l'avis" });
@@ -1182,10 +1219,15 @@ router.put("/:id/reviews/:reviewId", authenticateToken, async (req, res) => {
     }
 
     if (String(existingReview.user_id) !== String(req.user.id)) {
-      return res.status(403).json({ error: "Vous ne pouvez modifier que vos avis" });
+      return res
+        .status(403)
+        .json({ error: "Vous ne pouvez modifier que vos avis" });
     }
 
-    const reviewPayload = buildHealthcareReviewPayload(req.body, healthcareLocations[0]);
+    const reviewPayload = buildHealthcareReviewPayload(
+      req.body,
+      healthcareLocations[0],
+    );
     if (reviewPayload.error) {
       return res.status(400).json({ error: reviewPayload.error });
     }
@@ -1207,10 +1249,12 @@ router.put("/:id/reviews/:reviewId", authenticateToken, async (req, res) => {
 
     await recomputeHealthcarePlaceReviewSignals(locationId);
 
-    const reviewsByLocationId = await getHealthcareReviewsByLocationIds([locationId]);
-    const savedFrontendReview = (reviewsByLocationId.get(locationId) || []).find(
-      (review) => review.id === String(savedReview.id)
-    );
+    const reviewsByLocationId = await getHealthcareReviewsByLocationIds([
+      locationId,
+    ]);
+    const savedFrontendReview = (
+      reviewsByLocationId.get(locationId) || []
+    ).find((review) => review.id === String(savedReview.id));
 
     await logAuditEvent({
       req,

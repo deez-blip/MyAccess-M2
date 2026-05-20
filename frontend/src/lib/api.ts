@@ -105,7 +105,9 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
     response = await fetch(`${API_URL}${endpoint}`, config);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("La requête a pris trop de temps. Réessayez dans quelques secondes.");
+      throw new Error(
+        "La requête a pris trop de temps. Réessayez dans quelques secondes.",
+      );
     }
     throw error;
   } finally {
@@ -113,7 +115,9 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Erreur réseau" }));
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Erreur réseau" }));
     throw new Error(error.error || "Une erreur est survenue");
   }
 
@@ -132,21 +136,22 @@ export const authApi = {
     firstName?: string;
     lastName?: string;
     handicapType?: string;
-  }) => api<{
-    message: string;
-    user: {
-      id: string;
-      email: string;
-      firstName: string | null;
-      lastName: string | null;
-      handicapType: string | null;
-    };
-    session?: {
-      accessToken: string;
-      refreshToken: string;
-      expiresAt: number;
-    };
-  }>("/api/auth/signup", { method: "POST", body: data }),
+  }) =>
+    api<{
+      message: string;
+      user: {
+        id: string;
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        handicapType: string | null;
+      };
+      session?: {
+        accessToken: string;
+        refreshToken: string;
+        expiresAt: number;
+      };
+    }>("/api/auth/signup", { method: "POST", body: data }),
 
   login: (data: { email: string; password: string }) =>
     api<{
@@ -177,6 +182,19 @@ export const authApi = {
       createdAt: string;
     }>("/api/auth/me", { token }),
 
+  myReviews: (token: string) =>
+    api<
+      (Review & {
+        center: {
+          id: string;
+          name: string;
+          address: string;
+          city: string;
+          type: string;
+        };
+      })[]
+    >("/api/auth/me/reviews", { token }),
+
   updateProfile: (
     token: string,
     data: {
@@ -184,7 +202,7 @@ export const authApi = {
       lastName?: string;
       handicapType?: string;
       phone?: string;
-    }
+    },
   ) => api<unknown>("/api/auth/me", { method: "PUT", body: data, token }),
 
   refresh: (refreshToken: string) =>
@@ -248,7 +266,8 @@ export const centersApi = {
     if (params?.search) searchParams.set("search", params.search);
     if (params?.limit) searchParams.set("limit", params.limit.toString());
     if (params?.offset) searchParams.set("offset", params.offset.toString());
-    if (params?.offerType && params.offerType !== "all") searchParams.set("offerType", params.offerType);
+    if (params?.offerType && params.offerType !== "all")
+      searchParams.set("offerType", params.offerType);
     if (params?.dataSource && params.dataSource !== "all") {
       searchParams.set("dataSource", params.dataSource);
     }
@@ -267,7 +286,7 @@ export const centersApi = {
     if (params?.handicapMinScore !== undefined) {
       searchParams.set("handicapMinScore", params.handicapMinScore.toString());
     }
-    
+
     const query = searchParams.toString();
     return api<Center[]>(`/api/centers${query ? `?${query}` : ""}`);
   },
@@ -320,9 +339,13 @@ export const centersApi = {
         comment?: string;
       }[];
     },
-    token: string
+    token: string,
   ) =>
-    api<Review>(`/api/centers/${id}/reviews`, { method: "POST", body: data, token }),
+    api<Review>(`/api/centers/${id}/reviews`, {
+      method: "POST",
+      body: data,
+      token,
+    }),
 
   updateReview: (
     id: string,
@@ -337,7 +360,7 @@ export const centersApi = {
         comment?: string;
       }[];
     },
-    token: string
+    token: string,
   ) =>
     api<Review>(`/api/centers/${id}/reviews/${reviewId}`, {
       method: "PUT",
@@ -346,8 +369,11 @@ export const centersApi = {
     }),
 
   deleteReview: (id: string, reviewId: string, token: string) =>
-    api<{ deleted: boolean; id: string }>(`/api/centers/${id}/reviews/${reviewId}`, {
-      method: "DELETE",
-      token,
-    }),
+    api<{ deleted: boolean; id: string }>(
+      `/api/centers/${id}/reviews/${reviewId}`,
+      {
+        method: "DELETE",
+        token,
+      },
+    ),
 };

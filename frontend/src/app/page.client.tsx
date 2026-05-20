@@ -21,9 +21,9 @@ export default function LandingPageClient() {
   };
 
   const tags = [
-    "Handicap Moteur",
-    "Surdité",
-    "Autisme",
+    "Ascenseur PMR",
+    "Soutien LSF",
+    "Espace calme",
     "Hôpital",
     "Pédiatrie",
   ];

@@ -305,7 +305,7 @@ router.put("/me", authenticateToken, async (req, res) => {
       userId,
       {
         user_metadata: updates,
-      }
+      },
     );
 
     if (error) {
@@ -401,6 +401,77 @@ router.post("/refresh", async (req, res) => {
     res.status(500).json({
       error: "Erreur serveur lors du rafraîchissement",
     });
+  }
+});
+
+router.get("/me/reviews", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Fetch user's reviews joined with center informations
+    const reviews = await sql`
+      SELECT 
+        r.id,
+        r.place_id,
+        r.user_id,
+        r.comment,
+        r.rating,
+        r.items,
+        r.created_at,
+        r.updated_at,
+        u.email,
+        NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), '') AS user_name,
+        json_build_object(
+          'id', hp.id,
+          'name', hp.name,
+          'address', hp.address,
+          'city', hp.city || ' ' || hp.postal_code || ' ' || hp.region,
+          'type', hp.establishment_activities
+        ) as center
+      FROM healthcare_place_reviews r
+      LEFT JOIN users u ON u.id = r.user_id
+      JOIN healthcare_places hp ON hp.id = r.place_id
+      WHERE r.user_id = ${userId}
+      ORDER BY r.created_at DESC
+    `;
+
+    const formattedReviews = reviews.map((review) => {
+      const rating = Number(review.rating || 5);
+      const items = Array.isArray(review.items) ? review.items : [];
+      const placeId = review.place_id;
+      const handicapTypes = Array.from(
+        new Set(
+          items.flatMap((item) =>
+            Array.isArray(item.handicapTypes) ? item.handicapTypes : [],
+          ),
+        ),
+      );
+
+      return {
+        id: String(review.id),
+        userId: String(review.user_id),
+        userName: review.user_name || review.email || "Utilisateur",
+        centerId: `healthcare:${placeId}`,
+        date: review.created_at?.toISOString?.() || review.created_at,
+        scores: {
+          physique: rating,
+          numerique: rating,
+          accueil: rating,
+        },
+        comment: review.comment || "",
+        handicapTypes,
+        helpfulCount: 0,
+        accessibilityItems: items,
+        center: review.center,
+      };
+    });
+
+    res.json(formattedReviews);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des avis:", error);
+    res
+      .status(500)
+      .json({ error: "Erreur serveur lors de la récupération de vos avis" });
   }
 });
 
