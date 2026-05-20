@@ -25,6 +25,14 @@ const DIGITAL_ACCESS_FILTERS = new Set([
   "website",
   "doctolib",
 ]);
+const PLACE_CATEGORY_FILTER_PREFIX = "place_category:";
+const PLACE_CATEGORY_LABELS = [
+  "Laboratoire d'analyse médicale",
+  "Hôpital",
+  "Centre médical",
+  "Maison de santé ou centre de santé",
+  "Établissement de santé",
+];
 const ALLOWED_REVIEW_ITEM_STATUSES = new Set([
   "confirmed_present",
   "reported_absent",
@@ -584,16 +592,32 @@ function buildDigitalAccessCondition(digitalAccess) {
   return sql``;
 }
 
+function getPlaceCategoryFilterLabel(locationKind) {
+  const value = String(locationKind || "");
+  if (!value.startsWith(PLACE_CATEGORY_FILTER_PREFIX)) return null;
+
+  const label = value.slice(PLACE_CATEGORY_FILTER_PREFIX.length).trim();
+  return PLACE_CATEGORY_LABELS.includes(label) ? label : null;
+}
+
+function buildLocationKindCondition(locationKind) {
+  if (!locationKind || locationKind === "all") return sql``;
+
+  const placeCategoryLabel = getPlaceCategoryFilterLabel(locationKind);
+  if (placeCategoryLabel) {
+    return sql`AND si.profession_labels @> ARRAY[${placeCategoryLabel}]::TEXT[]`;
+  }
+
+  return sql`AND si.location_kind = ${locationKind}`;
+}
+
 function buildSearchIndexWhereCondition({
   locationKind,
   profession,
   dataSource,
   digitalAccess,
 }) {
-  const locationKindCondition =
-    locationKind && locationKind !== "all"
-      ? sql`AND si.location_kind = ${locationKind}`
-      : sql``;
+  const locationKindCondition = buildLocationKindCondition(locationKind);
   const professionCondition =
     profession && profession !== "all"
       ? sql`AND si.profession_labels @> ARRAY[${profession}]::TEXT[]`
@@ -887,6 +911,18 @@ async function getHealthcareFacets(filters = {}) {
     GROUP BY location_kind
     ORDER BY count DESC, value ASC
   `;
+  const placeCategories = await sql`
+    SELECT
+      CONCAT('place_category:', label) AS value,
+      COUNT(*)::int AS count
+    FROM healthcare_places si
+    CROSS JOIN LATERAL UNNEST(si.profession_labels) AS label
+    WHERE TRUE
+      ${locationKindCondition}
+      AND label IN ${sql(PLACE_CATEGORY_LABELS)}
+    GROUP BY label
+    ORDER BY count DESC, label ASC
+  `;
   const [locationKindTotal] = await sql`
     SELECT COUNT(*)::int AS total
     FROM healthcare_places si
@@ -901,6 +937,7 @@ async function getHealthcareFacets(filters = {}) {
       ${professionCondition}
       AND label IS NOT NULL
       AND label <> ''
+      AND label NOT IN ${sql(PLACE_CATEGORY_LABELS)}
     GROUP BY label
     HAVING COUNT(*) >= 2
     ORDER BY count DESC, label ASC
@@ -928,6 +965,7 @@ async function getHealthcareFacets(filters = {}) {
     ],
     locationKinds: [
       { value: "all", count: locationKindTotal.total },
+      ...placeCategories,
       ...locationKinds,
     ],
     professions: [
