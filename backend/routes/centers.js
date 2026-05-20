@@ -3,6 +3,7 @@ import sql from "../config/db.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { calculateDigitalAvailabilityScore } from "../services/healthcareDigitalAccess.js";
 import { recomputeHealthcarePlaceReviewSignals } from "../services/healthcarePlaces.js";
+import { logAuditEvent } from "../services/auditLog.js";
 
 const router = express.Router();
 const HANDICAP_MIN_SCORE_DEFAULT = 2.5;
@@ -1126,6 +1127,17 @@ router.post("/:id/reviews", authenticateToken, async (req, res) => {
       (review) => review.id === String(savedReview.id)
     );
 
+    await logAuditEvent({
+      req,
+      userId: req.user.id,
+      eventType: "review_create",
+      metadata: {
+        placeId: locationId,
+        reviewId: savedReview.id,
+        rating: savedReview.rating,
+      },
+    });
+
     res.status(201).json(savedFrontendReview || mapHealthcareReviewToFrontend(savedReview));
   } catch (error) {
     console.error("Erreur lors de la publication de l'avis:", error);
@@ -1200,6 +1212,17 @@ router.put("/:id/reviews/:reviewId", authenticateToken, async (req, res) => {
       (review) => review.id === String(savedReview.id)
     );
 
+    await logAuditEvent({
+      req,
+      userId: req.user.id,
+      eventType: "review_update",
+      metadata: {
+        placeId: locationId,
+        reviewId: savedReview.id,
+        rating: savedReview.rating,
+      },
+    });
+
     res.json(savedFrontendReview || mapHealthcareReviewToFrontend(savedReview));
   } catch (error) {
     console.error("Erreur lors de la modification de l'avis:", error);
@@ -1231,6 +1254,16 @@ router.delete("/:id/reviews/:reviewId", authenticateToken, async (req, res) => {
     }
 
     await recomputeHealthcarePlaceReviewSignals(locationId);
+
+    await logAuditEvent({
+      req,
+      userId: req.user.id,
+      eventType: "review_delete",
+      metadata: {
+        placeId: locationId,
+        reviewId: deletedReview.id,
+      },
+    });
 
     res.json({ deleted: true, id: String(deletedReview.id) });
   } catch (error) {

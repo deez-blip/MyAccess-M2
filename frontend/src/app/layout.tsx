@@ -7,6 +7,7 @@ import { Footer } from "../components/blocks/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { AccessibilityWidget } from "@/components/blocks/AccessibilityWidget";
+import { AuditPageTracker } from "@/components/blocks/AuditPageTracker";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({
       <body className={`${jakarta.variable} font-sans`} suppressHydrationWarning>
         <AccessibilityProvider>
           <AuthProvider>
+            <AuditPageTracker />
             <Header />
             <main id="main-content">{children}</main>
             <Footer />

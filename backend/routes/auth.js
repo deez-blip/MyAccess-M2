@@ -2,6 +2,7 @@ import express from "express";
 import { supabaseAdmin, supabase } from "../config/supabase.js";
 import { authenticateToken } from "../middleware/auth.js";
 import sql from "../config/db.js";
+import { logAuditEvent } from "../services/auditLog.js";
 
 const router = express.Router();
 
@@ -126,6 +127,13 @@ router.post("/signup", async (req, res) => {
       };
     }
 
+    await logAuditEvent({
+      req,
+      userId: authData.user.id,
+      eventType: "signup",
+      metadata: { email: authData.user.email },
+    });
+
     res.status(201).json({
       message: "Compte créé avec succès",
       user,
@@ -204,6 +212,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    await logAuditEvent({
+      req,
+      userId: authData.user.id,
+      eventType: "login",
+      metadata: { email: authData.user.email },
+    });
+
     res.json({
       user,
       session,
@@ -220,6 +235,12 @@ router.post("/logout", authenticateToken, async (req, res) => {
     if (refreshToken) {
       await supabaseAdmin.auth.signOut({ refreshToken });
     }
+
+    await logAuditEvent({
+      req,
+      userId: req.user.id,
+      eventType: "logout",
+    });
 
     res.json({ message: "Déconnexion réussie" });
   } catch (error) {
@@ -333,6 +354,13 @@ router.put("/me", authenticateToken, async (req, res) => {
         null,
       createdAt: dbUser[0]?.created_at?.toISOString() || data.user.created_at,
     };
+
+    await logAuditEvent({
+      req,
+      userId,
+      eventType: "profile_update",
+      metadata: { updatedFields: Object.keys(updates) },
+    });
 
     res.json(user);
   } catch (error) {

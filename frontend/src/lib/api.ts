@@ -11,6 +11,7 @@ import {
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const AUDIT_VISITOR_ID_KEY = "audit_visitor_id";
 
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -20,6 +21,55 @@ interface ApiOptions {
 }
 
 const DEFAULT_API_TIMEOUT_MS = 15000;
+
+export interface AuditLog {
+  id: number;
+  createdAt: string;
+  eventType: string;
+  pagePath: string | null;
+  userId: string | null;
+  userEmail: string | null;
+  userName: string | null;
+  visitorId: string | null;
+  metadata: Record<string, unknown>;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLog[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+  stats: {
+    last24h: number;
+    byEventType: {
+      event_type: string;
+      count: number;
+    }[];
+  };
+}
+
+export function getAuditVisitorId() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const existingVisitorId = window.localStorage.getItem(AUDIT_VISITOR_ID_KEY);
+    if (existingVisitorId) return existingVisitorId;
+
+    const visitorId =
+      typeof window.crypto?.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    window.localStorage.setItem(AUDIT_VISITOR_ID_KEY, visitorId);
+    return visitorId;
+  } catch {
+    return null;
+  }
+}
 
 export async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const { method = "GET", body, token, timeoutMs = DEFAULT_API_TIMEOUT_MS } = options;
@@ -32,6 +82,11 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const visitorId = getAuditVisitorId();
+  if (visitorId) {
+    headers["X-Visitor-Id"] = visitorId;
   }
 
   const config: RequestInit = {
@@ -60,6 +115,10 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Erreur réseau" }));
     throw new Error(error.error || "Une erreur est survenue");
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json();
@@ -134,6 +193,41 @@ export const authApi = {
       refreshToken: string;
       expiresAt: number;
     }>("/api/auth/refresh", { method: "POST", body: { refreshToken } }),
+};
+
+export const auditApi = {
+  trackPageView: (data: { path: string; title?: string; referrer?: string }, token?: string) =>
+    api<void>("/api/audit/page-view", {
+      method: "POST",
+      body: data,
+      token,
+      timeoutMs: 5000,
+    }),
+
+  logs: (params?: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    eventType?: string;
+    pagePath?: string;
+    userId?: string;
+    visitorId?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.offset) searchParams.set("offset", params.offset.toString());
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.eventType && params.eventType !== "all") {
+      searchParams.set("eventType", params.eventType);
+    }
+    if (params?.pagePath) searchParams.set("pagePath", params.pagePath);
+    if (params?.userId) searchParams.set("userId", params.userId);
+    if (params?.visitorId) searchParams.set("visitorId", params.visitorId);
+
+    const query = searchParams.toString();
+    return api<AuditLogsResponse>(`/api/audit/logs${query ? `?${query}` : ""}`);
+  },
 };
 
 // Centers API
