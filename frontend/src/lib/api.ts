@@ -178,7 +178,39 @@ export const centersApi = {
     return api<Center[]>(`/api/centers${query ? `?${query}` : ""}`);
   },
 
-  facets: () => api<CenterFilterFacets>("/api/centers/facets"),
+  facets: (params?: {
+    search?: string;
+    dataSource?: DashboardDataSource;
+    digitalAccess?: DashboardDigitalAccess;
+    locationKind?: DashboardLocationKind;
+    profession?: string;
+    handicapTypes?: HandicapType[];
+    handicapMinScore?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.dataSource && params.dataSource !== "all") {
+      searchParams.set("dataSource", params.dataSource);
+    }
+    if (params?.digitalAccess && params.digitalAccess !== "all") {
+      searchParams.set("digitalAccess", params.digitalAccess);
+    }
+    if (params?.locationKind && params.locationKind !== "all") {
+      searchParams.set("locationKind", params.locationKind);
+    }
+    if (params?.profession && params.profession !== "all") {
+      searchParams.set("profession", params.profession);
+    }
+    if (params?.handicapTypes?.length) {
+      searchParams.set("handicapTypes", params.handicapTypes.join(","));
+    }
+    if (params?.handicapMinScore !== undefined) {
+      searchParams.set("handicapMinScore", params.handicapMinScore.toString());
+    }
+
+    const query = searchParams.toString();
+    return api<CenterFilterFacets>(`/api/centers/facets${query ? `?${query}` : ""}`);
+  },
 
   get: (id: string) => api<Center>(`/api/centers/${id}`),
 

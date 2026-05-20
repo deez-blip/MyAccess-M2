@@ -353,23 +353,6 @@ export default function DashboardClient({ user }: DashboardProps) {
   const [filterFacets, setFilterFacets] = useState<CenterFilterFacets | null>(null);
   const hasLoadedCentersRef = useRef(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    centersApi
-      .facets()
-      .then((facets) => {
-        if (isMounted) setFilterFacets(facets);
-      })
-      .catch((err) => {
-        console.warn('Impossible de charger les filtres:', err);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const requestParams = useMemo(
     () =>
       buildRequestParams({
@@ -383,6 +366,34 @@ export default function DashboardClient({ user }: DashboardProps) {
     [searchQuery, dataSource, digitalAccess, locationKind, profession, selectedHandicaps]
   );
   const cacheKey = useMemo(() => buildCacheKey(requestParams), [requestParams]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const timeoutId = window.setTimeout(() => {
+      centersApi
+        .facets({
+          search: requestParams.search || undefined,
+          dataSource: requestParams.dataSource,
+          digitalAccess: requestParams.digitalAccess,
+          locationKind: requestParams.locationKind,
+          profession: requestParams.profession,
+          handicapTypes: requestParams.handicapTypes,
+          handicapMinScore: requestParams.handicapMinScore,
+        })
+        .then((facets) => {
+          if (isMounted) setFilterFacets(facets);
+        })
+        .catch((err) => {
+          console.warn('Impossible de charger les filtres:', err);
+        });
+    }, 150);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [requestParams]);
+
   const dataSourceOptions = useMemo(
     () => mergeFacetOptions(FALLBACK_DATA_SOURCE_OPTIONS, filterFacets?.dataSources),
     [filterFacets]
