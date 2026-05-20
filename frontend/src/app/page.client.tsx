@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, MapPin, Star, X, Building, Icon } from "lucide-react";
+import { Search, Star, X, Building, Icon } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,13 +9,14 @@ import Image from "next/image";
 
 export default function LandingPageClient() {
   const [searchValue, setSearchValue] = useState<string>("");
-  const [locationValue, setLocationValue] = useState<string>("");
   const { user } = useAuth();
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const query = searchValue.trim() ? `?q=${encodeURIComponent(searchValue.trim())}` : "";
+    const query = searchValue.trim()
+      ? `?q=${encodeURIComponent(searchValue.trim())}`
+      : "";
     router.push(`/dashboard${query}`);
   };
 
@@ -30,10 +31,10 @@ export default function LandingPageClient() {
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-[#f4f8ff] font-sans overflow-x-hidden"
+      className="min-h-screen bg-[#f4f8ff] font-sans overflow-x-hidden flex flex-col pb-[100px]"
     >
       {/* Hero Section */}
-      <section className="relative pt-32 pb-48 lg:pt-48 lg:pb-48">
+      <section className="relative flex-1 flex flex-col justify-center pt-24 pb-40 lg:pt-28 lg:pb-40">
         {/* Background decorative circles */}
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[800px] h-[800px] border border-blue-200/50 rounded-full" />
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] border border-blue-200/60 rounded-full" />
@@ -143,16 +144,6 @@ export default function LandingPageClient() {
                 onChange={(e) => setSearchValue(e.target.value)}
               />
             </div>
-            <div className="md:w-1/3 relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-              <Input
-                type="text"
-                placeholder="Où ? (Ville, Code postal)"
-                className="pl-12 h-14 bg-slate-50 border-transparent rounded-xl focus-visible:ring-primary focus-visible:bg-white text-base font-medium placeholder:font-normal"
-                value={locationValue}
-                onChange={(e) => setLocationValue(e.target.value)}
-              />
-            </div>
             <button
               type="submit"
               className="h-14 w-full md:w-16 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/95 shadow-md shadow-primary/20 transition-all shrink-0"
@@ -190,7 +181,7 @@ export default function LandingPageClient() {
       </section>
 
       {/* Spacer for floating search bar overlap */}
-      <div className="h-32 w-full"></div>
+      <div className="h-32 w-full shrink-0"></div>
     </main>
   );
 }
