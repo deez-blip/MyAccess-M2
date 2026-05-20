@@ -194,7 +194,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
         <Button
           variant="ghost"
           className="mb-4"
-          onClick={() => window.location.href = '/dashboard'}
+          onClick={() => (window.location.href = "/dashboard")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour à la recherche
@@ -210,7 +210,9 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                   <div className="flex-1">
                     <h1 className="mb-2">{center.name}</h1>
                     <div className="flex items-center gap-2 mb-3">
-                      <div className={`flex items-center gap-1 ${getScoreColor(center.globalScore)}`}>
+                      <div
+                        className={`flex items-center gap-1 ${getScoreColor(center.globalScore)}`}
+                      >
                         <Star className="h-6 w-6" fill="currentColor" />
                         <span className="text-xl">{center.globalScore}</span>
                       </div>
@@ -219,9 +221,7 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      <Badge>
-                        {getOfferLabel(center)}
-                      </Badge>
+                      <Badge>{getOfferLabel(center)}</Badge>
                       {mainProfession && (
                         <Badge variant="secondary">{mainProfession}</Badge>
                       )}
@@ -239,30 +239,43 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                    <span>{center.address}, {center.postalCode} {center.city}</span>
+                    <span>
+                      {center.address}, {center.postalCode} {center.city}
+                    </span>
                   </div>
                   {phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${phone}`} className="hover:underline">{phone}</a>
+                      <a href={`tel:${phone}`} className="hover:underline">
+                        {phone}
+                      </a>
                     </div>
                   )}
                   {email && (
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${email}`} className="hover:underline">{email}</a>
+                      <a href={`mailto:${email}`} className="hover:underline">
+                        {email}
+                      </a>
                     </div>
                   )}
                   {websiteUrl && (
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      <a
+                        href={websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
                         Site web
                       </a>
                     </div>
                   )}
                   {!phone && !email && !websiteUrl && (
-                    <p className="text-sm text-muted-foreground">Contact non renseigné.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Contact non renseigné.
+                    </p>
                   )}
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
@@ -281,29 +294,41 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span>Accessibilité physique</span>
-                    <span className={`${getScoreColor(center.accessibilityScore.physique)}`}>
+                    <span
+                      className={`${getScoreColor(center.accessibilityScore.physique)}`}
+                    >
                       {center.accessibilityScore.physique}/5
                     </span>
                   </div>
                   <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`absolute inset-y-0 left-0 ${getProgressColor(center.accessibilityScore.physique)}`}
-                      style={{ width: `${(center.accessibilityScore.physique / 5) * 100}%` }}
+                      style={{
+                        width: `${(center.accessibilityScore.physique / 5) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span>{isHealthcareLocation ? 'Disponibilité numérique' : 'Accessibilité numérique'}</span>
-                    <span className={`${getScoreColor(center.accessibilityScore.numerique)}`}>
+                    <span>
+                      {isHealthcareLocation
+                        ? "Disponibilité numérique"
+                        : "Accessibilité numérique"}
+                    </span>
+                    <span
+                      className={`${getScoreColor(center.accessibilityScore.numerique)}`}
+                    >
                       {center.accessibilityScore.numerique}/5
                     </span>
                   </div>
                   <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`absolute inset-y-0 left-0 ${getProgressColor(center.accessibilityScore.numerique)}`}
-                      style={{ width: `${(center.accessibilityScore.numerique / 5) * 100}%` }}
+                      style={{
+                        width: `${(center.accessibilityScore.numerique / 5) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -311,7 +336,9 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                 {isHealthcareLocation && center.digitalAccess && (
                   <div className="rounded-md border p-3 space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium">Canaux numériques</span>
+                      <span className="text-sm font-medium">
+                        Canaux numériques
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         Accessibilité numérique non vérifiée
                       </span>
@@ -335,14 +362,18 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span>Qualité de l&apos;accueil</span>
-                    <span className={`${getScoreColor(center.accessibilityScore.accueil)}`}>
+                    <span
+                      className={`${getScoreColor(center.accessibilityScore.accueil)}`}
+                    >
                       {center.accessibilityScore.accueil}/5
                     </span>
                   </div>
                   <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`absolute inset-y-0 left-0 ${getProgressColor(center.accessibilityScore.accueil)}`}
-                      style={{ width: `${(center.accessibilityScore.accueil / 5) * 100}%` }}
+                      style={{
+                        width: `${(center.accessibilityScore.accueil / 5) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -381,15 +412,15 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                       }}
                     >
                       {showRatingForm
-                        ? 'Annuler'
+                        ? "Annuler"
                         : userReviewCount > 0
-                          ? 'Donner un autre avis'
-                          : 'Donner mon avis'}
+                          ? "Donner un autre avis"
+                          : "Donner mon avis"}
                     </Button>
                   ) : !user ? (
                     <Button
                       variant="outline"
-                      onClick={() => window.location.href = loginRedirectUrl}
+                      onClick={() => (window.location.href = loginRedirectUrl)}
                     >
                       Se connecter pour donner un avis
                     </Button>
@@ -424,8 +455,12 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                     {center.reviews.length > 0 ? (
                       <div className="space-y-4">
                         {center.reviews.map((review) => (
-                          <div key={review.id} className="border-b last:border-0 pb-4 last:pb-0">
-                            {editingReviewId === review.id && canOpenRatingForm ? (
+                          <div
+                            key={review.id}
+                            className="border-b last:border-0 pb-4 last:pb-0"
+                          >
+                            {editingReviewId === review.id &&
+                            canOpenRatingForm ? (
                               <RatingForm
                                 center={center}
                                 user={user!}
@@ -441,9 +476,13 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                               <>
                                 <div className="flex justify-between items-start gap-3 mb-2">
                                   <div>
-                                    <p className="font-medium">{review.userName}</p>
+                                    <p className="font-medium">
+                                      {review.userName}
+                                    </p>
                                     <p className="text-sm text-muted-foreground">
-                                      {new Date(review.date).toLocaleDateString('fr-FR')}
+                                      {new Date(review.date).toLocaleDateString(
+                                        "fr-FR",
+                                      )}
                                     </p>
                                   </div>
 
@@ -464,11 +503,17 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        disabled={deletingReviewId === review.id}
-                                        onClick={() => handleDeleteReview(review.id)}
+                                        disabled={
+                                          deletingReviewId === review.id
+                                        }
+                                        onClick={() =>
+                                          handleDeleteReview(review.id)
+                                        }
                                       >
                                         <Trash2 className="mr-1 h-4 w-4" />
-                                        {deletingReviewId === review.id ? 'Suppression...' : 'Supprimer'}
+                                        {deletingReviewId === review.id
+                                          ? "Suppression..."
+                                          : "Supprimer"}
                                       </Button>
                                     </div>
                                   )}
@@ -481,9 +526,12 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                                     {review.accessibilityItems.map((item) => (
                                       <Badge
                                         key={`${review.id}-${item.criterionKey}-${item.status}`}
-                                        variant={getReviewItemBadgeVariant(item.status)}
+                                        variant={getReviewItemBadgeVariant(
+                                          item.status,
+                                        )}
                                       >
-                                        {getReviewItemStatusLabel(item.status)} · {item.label}
+                                        {getReviewItemStatusLabel(item.status)}{" "}
+                                        · {item.label}
                                       </Badge>
                                     ))}
                                   </div>
@@ -503,7 +551,9 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
                         Aucun avis pour le moment.
-                        {!user ? ' Connectez-vous pour partager votre expérience.' : ''}
+                        {!user
+                          ? " Connectez-vous pour partager votre expérience."
+                          : ""}
                       </p>
                     )}
                   </>
@@ -517,20 +567,27 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
             <div className="sticky top-24 space-y-4">
               <Card>
                 <CardContent className="pt-6 space-y-3">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     size="lg"
                     disabled={!appointmentUrl}
                     onClick={() => {
-                      if (appointmentUrl) window.open(appointmentUrl, '_blank', 'noopener,noreferrer');
+                      if (appointmentUrl)
+                        window.open(
+                          appointmentUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
                     }}
                   >
                     <Calendar className="mr-2 h-5 w-5" />
-                    {appointmentUrl ? 'Prendre rendez-vous' : 'RDV en ligne indisponible'}
+                    {appointmentUrl
+                      ? "Prendre rendez-vous"
+                      : "RDV en ligne indisponible"}
                   </Button>
 
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
                     onClick={handleGetDirections}
                   >
@@ -543,14 +600,17 @@ export default function CenterDetailsClient({ idCenter }: CenterDetailsClientPro
               {!user && (
                 <Card className="bg-primary text-primary-foreground">
                   <CardContent className="pt-6">
-                    <h3 className="mb-2">Partagez votre expérience</h3>
-                    <p className="text-sm mb-4 opacity-90">
-                      Connectez-vous pour publier un avis et contribuer à la communauté.
+                    <h3 className="mb-2 text-white">
+                      Partagez votre expérience
+                    </h3>
+                    <p className="text-sm text-white mb-4 opacity-90">
+                      Connectez-vous pour publier un avis et contribuer à la
+                      communauté.
                     </p>
-                    <Button 
-                      variant="secondary" 
+                    <Button
+                      variant="secondary"
                       className="w-full"
-                      onClick={() => window.location.href = loginRedirectUrl}
+                      onClick={() => (window.location.href = loginRedirectUrl)}
                     >
                       Se connecter
                     </Button>
