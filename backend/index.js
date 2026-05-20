@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  : ["http://localhost:3000"];
+  : ["http://localhost:3000", "http://127.0.0.1:3000"];
+
+const isLocalFrontendOrigin = (origin) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1):30\d{2}$/.test(origin);
 
 console.log("🌐 CORS allowed origins:", allowedOrigins);
 
@@ -30,7 +33,7 @@ app.use(
           allowed === origin ||
           allowed === originWithoutTrailingSlash ||
           origin.startsWith(allowed)
-      );
+      ) || isLocalFrontendOrigin(originWithoutTrailingSlash);
 
       if (isAllowed) {
         console.log(`✅ CORS allowed for origin: ${origin}`);
